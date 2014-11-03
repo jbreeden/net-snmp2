@@ -1,6 +1,6 @@
 $: << '../lib'
 
-require 'net-snmp'
+require 'net-snmp2'
 
 Net::SNMP::Session.open(:peername => "localhost", :community => "public" ) do |session|
   t_start = Time.now

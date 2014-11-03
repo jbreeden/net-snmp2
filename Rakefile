@@ -7,10 +7,9 @@ task :console do
   require 'irb/completion'
   require 'logger'
   $: << 'lib'
-  require 'net-snmp'
+  require 'net-snmp2'
   Net::SNMP::Debug.logger = Logger.new(STDOUT)
   Net::SNMP::Debug.logger.level = Logger::INFO
-  #Net::SNMP.init
   include Net::SNMP
   ARGV.clear
   IRB.start

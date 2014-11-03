@@ -1,6 +1,6 @@
 *.gem
 .bundle
 Gemfile.lock
-pkg/*
+pkg/
 *DS_Store
 client/

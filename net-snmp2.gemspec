@@ -4,7 +4,7 @@ $:.unshift lib
 require 'net/snmp/version'
 
 Gem::Specification.new do |s|
-  s.name        = "net-snmp"
+  s.name        = "net-snmp2"
   s.version     = Net::SNMP::VERSION
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Ron McClain"]
@@ -29,5 +29,4 @@ Gem::Specification.new do |s|
   s.add_dependency 'nice-ffi'
   s.add_development_dependency "rspec"
   s.add_development_dependency "eventmachine"
-  #s.add_dependency "nice-ffi"
 end

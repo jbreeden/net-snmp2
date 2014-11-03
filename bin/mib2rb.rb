@@ -1,5 +1,5 @@
 $: << '../lib'
-require 'net-snmp'
+require 'net-snmp2'
 require 'optparse'
 require 'erb'
 require 'logger'

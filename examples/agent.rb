@@ -1,5 +1,5 @@
 $: << '../lib'
-require 'net-snmp'
+require 'net-snmp2'
 
 Net::SNMP.init
 Net::SNMP::Debug.logger = Logger.new(STDOUT)

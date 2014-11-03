@@ -1,6 +1,6 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'net-snmp'
+require 'net-snmp2'
 require 'rspec'
 require 'rspec/autorun'
 
