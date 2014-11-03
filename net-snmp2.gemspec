@@ -7,13 +7,11 @@ Gem::Specification.new do |s|
   s.name        = "net-snmp2"
   s.version     = Net::SNMP::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = ["Ron McClain"]
+  s.authors     = ["Ron McClain", "Jared Breeden"]
   s.email       = ["mixtli@github.com"]
-  s.homepage    = "https://github.com/mixtli/net-snmp"
+  s.homepage    = "https://github.com/jbreeden/net-snmp2"
   s.summary     = %q{Object oriented wrapper around C net-snmp libraries}
-  s.description = %q{Uses ffi to create an object oriented wrapper around C net-snmp libraries}
-
-  s.rubyforge_project = "net-snmp"
+  s.description = %q{Cross platform net-snmp wrapper for Ruby, building on the original net-snmp gem}
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")
@@ -25,7 +23,6 @@ Gem::Specification.new do |s|
   s.extra_rdoc_files = %w{ README.rdoc }
   s.rdoc_options = ["--main=README.rdoc", "--line-numbers", "--inline-source", "--title=#{s.name}-#{s.version} Documentation"]
 
-  s.add_dependency 'ffi-inliner'
   s.add_dependency 'nice-ffi'
   s.add_development_dependency "rspec"
   s.add_development_dependency "eventmachine"
