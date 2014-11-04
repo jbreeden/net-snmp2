@@ -211,7 +211,6 @@ module Net
         send_pdu(pdu, options, &block)
       end
 
-
       # Issue an SNMP Set Request
       # See #send_pdu
       def set(oidlist, options = {}, &block)

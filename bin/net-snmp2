@@ -3,10 +3,60 @@
 require 'irb'
 require 'irb/completion'
 require 'logger'
+require 'optparse'
+require 'pry'
+
 $: << "#{File.dirname(__FILE__)}/../lib"
 require 'net-snmp2'
+
+usage = '
+Usage: net-snmp2 -v [VERSION] -c [COMMUNITY] [HOST[:PORT]]
+
+
+'.sub("\n", "")
+
+options = {
+  :version => '2c',
+  :community => 'public',
+  :peername => 'localhost',
+  :port => '161'
+}
+
+OptionParser.new do |opt|
+  opt.on("-v VERSION") do |version|
+    case version
+    when /^1$/
+      options[:version] = '1'
+    when /^2c?$/i
+      options[:version] = '2c'
+    when /^3$/
+      options[:version] = '3'
+    else
+      puts "Invalid version: #{version}"
+      puts
+      puts usage
+    end
+  end
+
+  opt.on("-c COMMUNITY") do |community|
+    options[:community] = community
+  end
+
+end.parse!
+
+if ARGV.length > 0
+  peername = ARGV[0]
+  m = peername.match /^(.*):([0-9]*)$/
+  options[:peername] = m[0]
+  options[:port] = m[1] unless m[1].empty?
+end
+
 Net::SNMP::Debug.logger = Logger.new(STDOUT)
 Net::SNMP::Debug.logger.level = Logger::INFO
 include Net::SNMP
 ARGV.clear
-IRB.start
+
+session = Net::SNMP::Session.open(options)
+
+Pry.config.prompt_name = "#{options[:peername]}:#{options[:port]}"
+session.pry

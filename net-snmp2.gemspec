@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.version     = Net::SNMP::VERSION
   s.platform    = Gem::Platform::RUBY
   s.authors     = ["Ron McClain", "Jared Breeden"]
-  s.email       = ["mixtli@github.com"]
+  s.email       = ["jared.breeden@gmail.com"]
   s.homepage    = "https://github.com/jbreeden/net-snmp2"
   s.summary     = %q{Object oriented wrapper around C net-snmp libraries}
   s.description = %q{Cross platform net-snmp wrapper for Ruby, building on the original net-snmp gem}

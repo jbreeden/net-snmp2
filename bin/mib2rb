@@ -90,7 +90,7 @@ USAGE
 root_node = nil
 erb_template = nil
 
-optparse = OptionParser.new do|opts|
+OptionParser.new do|opts|
   opts.on( '-h', '--help') do
     puts usage
     exit
@@ -133,8 +133,7 @@ optparse = OptionParser.new do|opts|
     end
   end
 
-end
-optparse.parse!
+end.parse!
 
 case ARGV.length
 when 1
