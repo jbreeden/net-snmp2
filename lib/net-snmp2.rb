@@ -3,6 +3,7 @@ require 'nice-ffi'
 require 'fiber'
 require 'socket'
 require 'logger'
+
 %w(
   snmp
   snmp/debug
@@ -25,11 +26,13 @@ require 'logger'
   snmp/agent/request_context
   snmp/agent/request_dispatcher
   snmp/message
-).each do |f|
+).each_with_index do |f|
   require "#{File.dirname(__FILE__)}/net/#{f}"
 end
 
-#Net::SNMP.init
+# Save the description tests from the mib. This allows them to be printed
+# if desired, by they may occupy significant amounts of memory...
+Net::SNMP::Wrapper.snmp_set_save_descriptions(1)
 
 #  XXX
 #  I just monkeypatched this to take a nil first argument.  Seems to work

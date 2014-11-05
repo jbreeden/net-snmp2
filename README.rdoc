@@ -46,6 +46,30 @@ functions are defined in Net::SNMP::Wrapper.  You can call them like so:
 == NOTES
 You must call Session.close when you're done with a session to avoid leaking memory
 
+== ENVIRONMENT VARIABLES
+The main use of environmental variables with respect to these API calls is to configure which MIB modules should be loaded, and where they are located.
+
+=== IMPORTANT
+These environment variables, if used, must be set before requiring this gem. Net-snmp is performing its read of the mib when the library is loaded (that is, for this gem, when the Wrapper.rb file is included).
+
+MIBDIRS
+* A colon separated list of directories to search for MIB modules.
+* Default: /usr/local/share/snmp/mibs
+* Used by init_mib, netsnmp_read_module, read_all_mibs and (implicitly) by read_mib.
+
+MIBS
+* A colon separated list of MIB modules to load.
+* The default list of modules will depend on how the Net-SNMP software was originally compiled, but is typically: IP-MIB:IF-MIB:TCP-MIB:UDP-MIB:SNMPv2-MIB:RFC1213-MIB:UCD-SNMP-MIB:HOST-RESOURCES-MIB
+* If the value of the MIBS environmental variable starts with a '+' character, then these MIB modules will be added to the default list. Otherwise these modules (plus any that they IMPORT from) will be loaded instead of the default list.
+* If the MIBS environmental variable has the value ALL then read_all_mibs will be called to load the full collection of all available MIB modules.
+* Used by init_mib only.
+
+MIBFILES
+* A colon separated list of files to load.
+* Default: (none)
+* Used by init_mib only.
+
+
 == ERROR HANDLING
     In the synchronous versions, all session methods raise Net::SNMP:Error on any error.  Timeouts raise Net::SNMP::TimeoutError.
     In the asynchronous versions, the first argument to your callback will be the return status.  Possible values include :success, :timeout, and :send_error.
@@ -56,47 +80,48 @@ You must call Session.close when you're done with a session to avoid leaking mem
 
 A simple synchronous SNMP-GET
 
-  session = Net::SNMP::Session.open(:peername => "test.net-snmp.org", :community => "demopublic" )
-  begin
-    pdu = session.get("sysDescr.0")
-    puts pdu.varbinds.first.value
-  rescue Net::SNMP::Error => e
-    puts e.message
-  end
-  session.close
+    session = Net::SNMP::Session.open(:peername => "test.net-snmp.org", :community => "demopublic" )
+    begin
+      pdu = session.get("sysDescr.0")
+      puts pdu.varbinds.first.value
+    rescue Net::SNMP::Error => e
+      puts e.message
+    end
+    session.close
 
 An asynchronous SNMP-GET
-    session = Net::SNMP::Session.open(:peername => 'test.net-snmp.org', :community => 'demopublic') do |session|
-      session.get(["sysDescr.0", "sysContact.0"]) do |status, pdu|
-        if status == :success
-          puts pdu.varbinds[0].value
-        else
-          puts "something went wrong.  status is #{status}"
+
+      session = Net::SNMP::Session.open(:peername => 'test.net-snmp.org', :community => 'demopublic') do |session|
+        session.get(["sysDescr.0", "sysContact.0"]) do |status, pdu|
+          if status == :success
+            puts pdu.varbinds[0].value
+          else
+            puts "something went wrong.  status is #{status}"
+          end
         end
       end
-    end
-    Net::SNMP::Dispatcher.select(false)  #Setting timeout to false causes dispatcher to block until data is ready
-    session.close
+      Net::SNMP::Dispatcher.select(false)  #Setting timeout to false causes dispatcher to block until data is ready
+      session.close
 
 An SNMPv3 synchronous AuthPriv (encrypted) SNMP-GET
 
-  Net::SNMP::Session.open(:peername => "test.net-snmp.org",
-													:community => "demopublic",
-													:version => "3",
-													:security_level => Net::SNMP::Constants::SNMP_SEC_LEVEL_AUTHPRIV,
-													:auth_protocol => :sha1,
-													:priv_protocol => :des,
-													:username => "myuser",
-													:auth_password => "mypassword",
-                                                                                                        :priv_password => "myprivpasswd"
-													) {|session|
-  	begin
-    	pdu = session.get("sysDescr.0")
-    	puts pdu.varbinds.first.value
-  	rescue Net::SNMP::Error => e
-    	puts e.message
+    Net::SNMP::Session.open(
+          :peername => "test.net-snmp.org",
+          :community => "demopublic", :version => "3",
+          :security_level => Net::SNMP::Constants::SNMP_SEC_LEVEL_AUTHPRIV,
+          :auth_protocol => :sha1,
+          :priv_protocol => :des,
+          :username => "myuser",
+          :auth_password => "mypassword",
+          :priv_password => "myprivpasswd"
+          ) { |session|
+    	begin
+      	pdu = session.get("sysDescr.0")
+      	puts pdu.varbinds.first.value
+    	rescue Net::SNMP::Error => e
+      	puts e.message
+    	end
   	end
-	end
 
 Running the dispatcher from eventmachine
     EM.run do
@@ -117,20 +142,20 @@ Running the dispatcher from eventmachine
     end
 
 Using synchronous style with eventmachine in ruby 1.9
-  EM.run do
-      Net::SNMP::Dispatcher.fiber_loop
-      Fiber.new {
-        session = Net::SNMP::Session.open(:peername => 'test.net-snmp.org', :community => 'demopublic')
-        begin
-          pdu = session.get("sysDescr.0")
-          puts pdu.varbinds[0].value
-        rescue Net::SNMP::Error => e
-          puts e.message
-        end
-        session.close
-        EM.stop
-      }.resume
-  end
+    EM.run do
+        Net::SNMP::Dispatcher.fiber_loop
+        Fiber.new {
+          session = Net::SNMP::Session.open(:peername => 'test.net-snmp.org', :community => 'demopublic')
+          begin
+            pdu = session.get("sysDescr.0")
+            puts pdu.varbinds[0].value
+          rescue Net::SNMP::Error => e
+            puts e.message
+          end
+          session.close
+          EM.stop
+        }.resume
+    end
 
 
 In the last example, note that you must wrap your code in Fiber.new {}.resume.   You could instead use the
@@ -145,8 +170,9 @@ data is available.  This is all seemless to you, the developer.  Behold the powe
 By default, net-snmp loads all of your system MIBS.  You can add additional mibs by adding them to your MIBS environment variable.
 You can also explicitly add MIBs using the MIB api.  For example:
 
-  Net::SNMP::MIB.add_mibdir("/usr/local/share/mibs")
-  Net::SNMP::MIB.read_mib("RFC1213-MIB.txt")
+    require 'net-snmp2'
+    Net::SNMP::MIB.add_mibdir("/usr/local/share/mibs")
+    Net::SNMP::MIB.read_mib("RFC1213-MIB.txt")
 
 Having the appropriate MIBs loaded will allow you to pass names instead of numeric oids to net-snmp methods.  You can also pass
 Net::SNMP::OID objects.  For example
@@ -186,7 +212,7 @@ break this gem.  Please let me know if you find bugs or missing features.  Or be
 
 
 == Note on Patches/Pull Requests
- 
+
 * Fork the project.
 * Make your feature addition or bug fix.
 * Add tests for it. This is important so I don't break it in a
@@ -196,6 +222,6 @@ break this gem.  Please let me know if you find bugs or missing features.  Or be
 * Send me a pull request. Bonus points for topic branches.
 * Bug reports including a failing rspec get priority treatment
 
- == Copyright
+== Copyright
 
 Copyright (c) 2010 mixtli. See LICENSE for details.

@@ -42,16 +42,40 @@ end.parse!
 
 if ARGV.length > 0
   peername = ARGV[0]
-  m = peername.match /^(.*):([0-9]*)$/
-  options[:peername] = m[0]
-  options[:port] = m[1] unless m[1].empty?
+  m = peername.match /^([^:]*)(:([0-9]*))?$/
+  options[:peername] = m[1]
+  options[:port] = m[3] unless m[3].nil? || m[3].empty?
 end
 
 Net::SNMP::Debug.logger = Logger.new(STDOUT)
 Net::SNMP::Debug.logger.level = Logger::INFO
-include Net::SNMP
 ARGV.clear
 
 session = Net::SNMP::Session.open(options)
+
+class ManagerRepl
+  attr_accessor :session, :pdu
+  alias response pdu
+
+  def initialize(session)
+    @session = session
+  end
+
+  def get(oids, options = {})
+    oids = Array(oids)
+    @pdu = session.get(oids)
+    @pdu.print
+    @pdu.error? ? :error : :success
+  end
+
+  def set(varbinds, options = {})
+    @pdu = session.set(varbinds)
+    @pdu.print
+    @pdu.error? ? :error : :success
+  end
+end
+
+Net::SNMP.init
+pry_context = ManagerRepl.new(session)
 Pry.config.prompt_name = "net-snmp2"
-session.pry
+pry_context.pry

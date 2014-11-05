@@ -25,6 +25,7 @@ module Net
         #     pdu = sess.get(["sysDescr.0"])
         #     pdu.print
         #   end
+        #
         # Options:
         # * +peername+ - hostname
         # * +community+ - snmp community string.  Default is public
@@ -211,12 +212,32 @@ module Net
         send_pdu(pdu, options, &block)
       end
 
-      # Issue an SNMP Set Request
+      # Issue an SNMP Set Request.
+      # - vb_list: An single varbind, or an array of varbinds, each of which may be
+      #   + An Array of length 3 `[oid, type, value]`
+      #   + An Array of length 2 `[oid, value]`
+      #   + Or a Hash `{oid: oid, type: type, value: value}`
+      #     * Hash syntax is the same as supported by PDU.add_varbind
+      #     * If type is not supplied, it is infered by the value
       # See #send_pdu
-      def set(oidlist, options = {}, &block)
+      def set(vb_list, options = {}, &block)
         pdu = PDU.new(Constants::SNMP_MSG_SET)
-        oidlist.each do |oid|
-          pdu.add_varbind(:oid => oid[0], :type => oid[1], :value => oid[2])
+
+        # Normalize input to an array if a single varbind is supplied
+        if vb_list.kind_of?(Hash) || (vb_list.kind_of?(Enumerable) && !vb_list.first.kind_of?(Enumerable))
+          vb_list = [vb_list]
+        end
+
+        vb_list.each do |vb|
+          if vb.kind_of?(Hash)
+            pdu.add_varbind(vb)
+          elsif vb.kind_of?(Enumerable) && vb.length == 3
+            pdu.add_varbind(:oid => vb[0], :type => vb[1], :value => vb[2])
+          elsif vb.kind_of?(Enumerable) && vb.length == 2
+            pdu.add_varbind(:oid => vb[0], :value => vb[1])
+          else
+            raise "Invalid varbind: #{vb}"
+          end
         end
         send_pdu(pdu, options, &block)
       end
