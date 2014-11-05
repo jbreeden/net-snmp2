@@ -7,6 +7,12 @@ module Net
 
       The main use of environmental variables with respect to these API calls is to configure which MIB modules should be loaded, and where they are located.
 
+      !!IMPORTANT!!
+      If using these environment variables, they MUST be set before requiring this gem.
+      At least on Windows (and possibly everywhere), net-snmp is reading the mib as
+      soon as the dll is loaded (that is, when `ffi_lib ["libnetsnmp", "netsnmp"]` is called
+      in the Wrapper module).
+
       MIBDIRS
       A colon separated list of directories to search for MIB modules.
       Default: /usr/local/share/snmp/mibs

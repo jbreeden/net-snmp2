@@ -3,6 +3,7 @@ require 'nice-ffi'
 require 'fiber'
 require 'socket'
 require 'logger'
+
 %w(
   snmp
   snmp/debug
@@ -25,7 +26,7 @@ require 'logger'
   snmp/agent/request_context
   snmp/agent/request_dispatcher
   snmp/message
-).each do |f|
+).each_with_index do |f|
   require "#{File.dirname(__FILE__)}/net/#{f}"
 end
 

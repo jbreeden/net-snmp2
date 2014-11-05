@@ -7,27 +7,24 @@ module Wrapper
 
   class Counter64 < NiceFFI::Struct
     layout(
-           :high, :u_long,
-           :low, :u_long
+      :high, :u_long,
+      :low, :u_long
     )
   end
 
   class TimeVal < NiceFFI::Struct
     layout(:tv_sec, :long, :tv_usec, :long)
   end
-  def self.print_timeval(tv)
-    puts "tv_sec = #{tv.tv_sec}, tv_usec = #{tv.tv_usec} "
-  end
 
   class NetsnmpVardata < FFI::Union
     layout(
-           :integer, :pointer,
-           :string, :pointer,
-           :objid, :pointer,
-           :bitstring, :pointer,
-           :counter64, :pointer,
-           :float, :pointer,
-           :double, :pointer
+      :integer, :pointer,
+      :string, :pointer,
+      :objid, :pointer,
+      :bitstring, :pointer,
+      :counter64, :pointer,
+      :float, :pointer,
+      :double, :pointer
     )
   end
 
@@ -43,17 +40,17 @@ module Wrapper
 
   class VariableList < NiceFFI::Struct
     layout(
-           :next_variable, :pointer,
-           :name, :pointer,
-           :name_length, :size_t,
-           :type, :u_char,
-           :val, NetsnmpVardata,
-           :val_len, :size_t,
-           :name_loc, [:oid, Net::SNMP::MAX_OID_LEN],
-           :buf, [:u_char, 40],
-           :data, :pointer,
-           :dataFreeHook, callback([ :pointer ], :void),
-           :index, :int
+      :next_variable, :pointer,
+      :name, :pointer,
+      :name_length, :size_t,
+      :type, :u_char,
+      :val, NetsnmpVardata,
+      :val_len, :size_t,
+      :name_loc, [:oid, Net::SNMP::MAX_OID_LEN],
+      :buf, [:u_char, 40],
+      :data, :pointer,
+      :dataFreeHook, callback([ :pointer ], :void),
+      :index, :int
     )
   end
 
@@ -132,54 +129,54 @@ module Wrapper
 
   class SnmpSession < NiceFFI::Struct
     layout(
-           :version, :long,
-           :retries, :int,
-           :timeout, :long,
-           :flags, :u_long,
-           :subsession, :pointer,
-           :next, :pointer,
-           :peername, :pointer,
-           :remote_port, :u_short,
-           :localname, :pointer,
-           :local_port, :u_short,
-           :authenticator, callback([ :pointer, :pointer, :pointer, :uint ], :pointer),
-           :callback, :netsnmp_callback,
-           :callback_magic, :pointer,
-           :s_errno, :int,
-           :s_snmp_errno, :int,
-           :sessid, :long,
-           :community, :pointer,
-           :community_len, :size_t,
-           :rcvMsgMaxSize, :size_t,
-           :sndMsgMaxSize, :size_t,
-           :isAuthoritative, :u_char,
-           :contextEngineID, :pointer,
-           :contextEngineIDLen, :size_t,
-           :engineBoots, :u_int,
-           :engineTime, :u_int,
-           :contextName, :pointer,
-           :contextNameLen, :size_t,
-           :securityEngineID, :pointer,
-           :securityEngineIDLen, :size_t,
-           :securityName, :pointer,
-           :securityNameLen, :size_t,
-           :securityAuthProto, :pointer,
-           :securityAuthProtoLen, :size_t,
-           :securityAuthKey, [:u_char, 32],
-           :securityAuthKeyLen, :size_t,
-           :securityAuthLocalKey, :pointer,
-           :securityAuthLocalKeyLen, :size_t,
-           :securityPrivProto, :pointer,
-           :securityPrivProtoLen, :size_t,
-           :securityPrivKey, [:u_char, 32],
-           :securityPrivKeyLen, :size_t,
-           :securityPrivLocalKey, :pointer,
-           :securityPrivLocalKeyLen, :size_t,
-           :securityModel, :int,
-           :securityLevel, :int,
-           :paramName, :pointer,
-           :securityInfo, :pointer,
-           :myvoid, :pointer
+      :version, :long,
+      :retries, :int,
+      :timeout, :long,
+      :flags, :u_long,
+      :subsession, :pointer,
+      :next, :pointer,
+      :peername, :pointer,
+      :remote_port, :u_short,
+      :localname, :pointer,
+      :local_port, :u_short,
+      :authenticator, callback([ :pointer, :pointer, :pointer, :uint ], :pointer),
+      :callback, :netsnmp_callback,
+      :callback_magic, :pointer,
+      :s_errno, :int,
+      :s_snmp_errno, :int,
+      :sessid, :long,
+      :community, :pointer,
+      :community_len, :size_t,
+      :rcvMsgMaxSize, :size_t,
+      :sndMsgMaxSize, :size_t,
+      :isAuthoritative, :u_char,
+      :contextEngineID, :pointer,
+      :contextEngineIDLen, :size_t,
+      :engineBoots, :u_int,
+      :engineTime, :u_int,
+      :contextName, :pointer,
+      :contextNameLen, :size_t,
+      :securityEngineID, :pointer,
+      :securityEngineIDLen, :size_t,
+      :securityName, :pointer,
+      :securityNameLen, :size_t,
+      :securityAuthProto, :pointer,
+      :securityAuthProtoLen, :size_t,
+      :securityAuthKey, [:u_char, 32],
+      :securityAuthKeyLen, :size_t,
+      :securityAuthLocalKey, :pointer,
+      :securityAuthLocalKeyLen, :size_t,
+      :securityPrivProto, :pointer,
+      :securityPrivProtoLen, :size_t,
+      :securityPrivKey, [:u_char, 32],
+      :securityPrivKeyLen, :size_t,
+      :securityPrivLocalKey, :pointer,
+      :securityPrivLocalKeyLen, :size_t,
+      :securityModel, :int,
+      :securityLevel, :int,
+      :paramName, :pointer,
+      :securityInfo, :pointer,
+      :myvoid, :pointer
     )
   end
 
