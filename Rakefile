@@ -1,10 +1,9 @@
 require 'bundler'
+require 'pry'
 Bundler::GemHelper.install_tasks
 
-
 task :console do
-  require 'irb'
-  require 'irb/completion'
+  require 'pry'
   require 'logger'
   $: << 'lib'
   require 'net-snmp2'
@@ -12,5 +11,14 @@ task :console do
   Net::SNMP::Debug.logger.level = Logger::INFO
   include Net::SNMP
   ARGV.clear
-  IRB.start
+
+  current_prompt = nil
+  Pry.config.prompt = [
+    proc { |obj, level|
+      current_prompt = "[net-snmp2 (#{obj}) (#{level})] "
+    }, proc {
+      "[#{'.' * (current_prompt.length - 3)}] "
+    }
+  ]
+  Net::SNMP.pry
 end

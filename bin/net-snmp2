@@ -1,7 +1,5 @@
 #! /usr/bin/env ruby
 
-require 'irb'
-require 'irb/completion'
 require 'logger'
 require 'optparse'
 require 'pry'
@@ -11,8 +9,6 @@ require 'net-snmp2'
 
 usage = '
 Usage: net-snmp2 -v [VERSION] -c [COMMUNITY] [HOST[:PORT]]
-
-
 '.sub("\n", "")
 
 options = {
@@ -57,6 +53,5 @@ include Net::SNMP
 ARGV.clear
 
 session = Net::SNMP::Session.open(options)
-
-Pry.config.prompt_name = "#{options[:peername]}:#{options[:port]}"
+Pry.config.prompt_name = "net-snmp2"
 session.pry

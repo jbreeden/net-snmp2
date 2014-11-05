@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
   s.rdoc_options = ["--main=README.rdoc", "--line-numbers", "--inline-source", "--title=#{s.name}-#{s.version} Documentation"]
 
   s.add_dependency 'nice-ffi'
+  s.add_dependency 'pry'
   s.add_development_dependency "rspec"
   s.add_development_dependency "eventmachine"
 end

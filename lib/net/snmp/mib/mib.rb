@@ -3,26 +3,28 @@ module Net
   module SNMP
     module MIB
 =begin
-      ENVIRONMENT VARIABLES
 
-      The main use of environmental variables with respect to these API calls is to configure which MIB modules should be loaded, and where they are located.
+= ENVIRONMENT VARIABLES
 
-      MIBDIRS
-      A colon separated list of directories to search for MIB modules.
-      Default: /usr/local/share/snmp/mibs
-      Used by init_mib, netsnmp_read_module, read_all_mibs and (implicitly) by read_mib.
+The main use of environmental variables with respect to these API calls is to configure which MIB modules should be loaded, and where they are located.
 
-      MIBS
-      A colon separated list of MIB modules to load.
-      The default list of modules will depend on how the Net-SNMP software was originally compiled, but is typically: IP-MIB:IF-MIB:TCP-MIB:UDP-MIB:SNMPv2-MIB:RFC1213-MIB:UCD-SNMP-MIB:HOST-RESOURCES-MIB
-      If the value of the MIBS environmental variable starts with a '+' character, then these MIB modules will be added to the default list. Otherwise these modules (plus any that they IMPORT from) will be loaded instead of the default list.
-      If the MIBS environmental variable has the value ALL then read_all_mibs will be called to load the full collection of all available MIB modules.
-      Used by init_mib only.
+== MIBDIRS
+A colon separated list of directories to search for MIB modules.
+Default: /usr/local/share/snmp/mibs
+Used by init_mib, netsnmp_read_module, read_all_mibs and (implicitly) by read_mib.
 
-      MIBFILES
-      A colon separated list of files to load.
-      Default: (none)
-      Used by init_mib only.
+== MIBS
+A colon separated list of MIB modules to load.
+The default list of modules will depend on how the Net-SNMP software was originally compiled, but is typically: IP-MIB:IF-MIB:TCP-MIB:UDP-MIB:SNMPv2-MIB:RFC1213-MIB:UCD-SNMP-MIB:HOST-RESOURCES-MIB
+If the value of the MIBS environmental variable starts with a '+' character, then these MIB modules will be added to the default list. Otherwise these modules (plus any that they IMPORT from) will be loaded instead of the default list.
+If the MIBS environmental variable has the value ALL then read_all_mibs will be called to load the full collection of all available MIB modules.
+Used by init_mib only.
+
+== MIBFILES
+A colon separated list of files to load.
+Default: (none)
+Used by init_mib only.
+
 =end
 
       # Configures the MIB directory search path (using add_mibdir ), sets up the internal
@@ -64,6 +66,7 @@ module Net
       def self.read_mib(filename)
         Wrapper.read_mib(filename)
       end
+      
     end
   end
 end
