@@ -1,7 +1,7 @@
 module Net
   module SNMP
     module MIB
-      
+
       # Configures the MIB directory search path (using add_mibdir ), sets up the internal
       # MIB framework, and then loads the appropriate MIB modules (using netsnmp_read_module
       # and  read_mib). It should be called before any other routine that manipulates
@@ -15,8 +15,26 @@ module Net
         Wrapper.read_all_mibs
       end
 
+      # Get an OID object representing `oid`
+      # - `oid` argument may be a numerical oid, or the MIB name
       def self.get_node(oid)
         Node.get_node(oid)
+      end
+
+      # Get an OID object representing `oid`
+      # - `oid` argument may be a numerical oid, or the MIB name
+      def self.[](oid)
+        Node.get_node(oid)
+      end
+
+      # Translates a numerical oid to it's MIB name, or a name to numerical oid
+      def self.translate(oid)
+        node = Node.get_node(oid)
+        if oid =~ /^[0-9.]*$/
+          node.label
+        else
+          node.oid.to_s
+        end
       end
 
       # Add the specified directory to the path of locations which are searched

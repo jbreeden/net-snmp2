@@ -20,6 +20,7 @@ require 'logger'
   snmp/mib/mib
   snmp/mib/node
   snmp/mib/module
+  snmp/mib/templates
   snmp/dispatcher
   snmp/agent/agent
   snmp/agent/provider

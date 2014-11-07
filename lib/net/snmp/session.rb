@@ -9,7 +9,7 @@ module Net
       # Provides API for interacting with a host with snmp
       extend Forwardable
       include Net::SNMP::Debug
-      attr_accessor :struct, :callback, :requests, :peername, :community
+      attr_accessor :struct, :callback, :requests, :peername, :port, :community
       attr_reader :version
       def_delegator :@struct, :pointer
       #@sessions = []
@@ -62,7 +62,9 @@ module Net
         @retries = options[:retries] || 5
         @requests = {}
         @peername = options[:peername] || 'localhost'
-        @peername = "#{@peername}:#{options[:port]}" if options[:port]
+        options[:port] ||= 161
+        @port = options[:port]
+        @peername = "#{@peername}:#{options[:port]}"
         @community = options[:community] || "public"
         options[:community_len] = @community.length
         options[:version] ||= Constants::SNMP_VERSION_2c
@@ -200,6 +202,10 @@ module Net
       end
 
       # Issue an SNMP GETBULK Request
+      # Supports typical options, plus
+      #  - `:non_repeaters` The number of non-repeated oids in the request
+      #  - `:max_repititions` The maximum repititions to return for all repeaters
+      # Note that the non-repeating varbinds must be added first.
       # See #send_pdu
       def get_bulk(oidlist, options = {}, &block)
         pdu = PDU.new(Constants::SNMP_MSG_GETBULK)
@@ -313,7 +319,6 @@ module Net
 
       alias :poll :select
 
-
       # Issue repeated getnext requests on each oid passed in until
       # the result is no longer a child.  Returns a hash with the numeric
       # oid strings as keys.
@@ -325,12 +330,10 @@ module Net
         all_results = {}
         base_list = oidlist
         while(!oidlist.empty? && pdu = get_next(oidlist, options))
-          debug "==============================================================="
-          debug "base_list = #{base_list}"
+          debug "================ Walk: Get Next ====================="
+          debug "base_list: \n#{base_list.map { |o| "   - #{o.to_s}" }.join("\n")}"
           prev_base = base_list.dup
           oidlist = []
-          #print_errors
-          #pdu.print_errors
           pdu.varbinds.each_with_index do |vb, i|
             if prev_base[i].parent_of?(vb.oid) && vb.object_type != Constants::SNMP_ENDOFMIBVIEW
               # Still in subtree.  Store results and add next oid to list

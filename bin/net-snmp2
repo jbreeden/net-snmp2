@@ -2,6 +2,7 @@
 
 require 'logger'
 require 'optparse'
+require 'erb'
 require 'pry'
 
 $: << "#{File.dirname(__FILE__)}/../lib"
@@ -11,6 +12,7 @@ usage = '
 Usage: net-snmp2 -v [VERSION] -c [COMMUNITY] [HOST[:PORT]]
 '.sub("\n", "")
 
+# Default option values
 options = {
   :version => '2c',
   :community => 'public',
@@ -40,38 +42,181 @@ OptionParser.new do |opt|
 
 end.parse!
 
+session = nil
 if ARGV.length > 0
   peername = ARGV[0]
   m = peername.match /^([^:]*)(:([0-9]*))?$/
   options[:peername] = m[1]
   options[:port] = m[3] unless m[3].nil? || m[3].empty?
+  session = Net::SNMP::Session.open(options)
 end
 
 Net::SNMP::Debug.logger = Logger.new(STDOUT)
 Net::SNMP::Debug.logger.level = Logger::INFO
 ARGV.clear
 
-session = Net::SNMP::Session.open(options)
-
 class ManagerRepl
-  attr_accessor :session, :pdu
+  include Net::SNMP
+  attr_accessor :sessions, :pdu
   alias response pdu
 
-  def initialize(session)
-    @session = session
+  NO_SESSION_PROMPT = <<EOF
+
+No manager sessions active
+--------------------------
+
+ - Use `manage(options)` to start a session.
+ - Examples
+   + `manage 'localhost'`
+   + `manage(peername: 'localhost', version: '1')`
+ - run `? manage` for more details
+
+EOF
+
+  def initialize(session=nil)
+    @sessions = []
+    if session
+      @sessions << session
+    end
   end
 
+  # Adds a session for managing options[:peername] to the sessions list.
+  # - Note that all requests are sent to all active sessions, and their
+  #   responses are all displayed under their peername.
+  # - You may close a session by calling `close(peername)`
+  #
+  # Options Supported (same as Net::SNMP::Session#open):
+  # - peername: ADDRESS_OF_AGENT
+  # - port: PORT (defaults to 161)
+  # - version:  '1'|'2c'|'3' (defaults to '2c')
+  #
+  # You may also supply a string as the options argument, in which
+  # case it is used as the peername, and the version and port are
+  # set to defaults. (Ex: `manage('192.168.1.5')`)
+  def manage(options)
+    options = {:peername => options} if options.kind_of?(String)
+    sessions << Session.open(options)
+    "Opened session for #{options[:peername]}"
+  end
+
+  # Close the session with the given `peername`
+  def close(peername)
+    session = sessions.find { |sess| sess.peername.to_s == peername.to_s }
+    if (session)
+      session.close
+      sessions.delete(session)
+      "Closed session for #{options[:peername]}"
+    else
+      puts "No session active for '#{peername}'"
+    end
+  end
+
+  # Translates a numerical oid to it's MIB name, or a name to numerical oid
+  def translate(oid)
+    MIB.translate(oid)
+  end
+
+  # Prints a description of a MIB variable
+  # - `oid` May be either a numeric OID, or MIB variable name
+  def describe(oid)
+    nodes = [MIB[oid]]
+    puts ERB.new(Net::SNMP::MIB::Templates::DESCRIBE, nil, "-").result(binding)
+  end
+
+  # Prints a description of a the MIB subtree starting at root `oid`
+  # - `oid` May be either a numeric OID, or MIB variable name
+  def describe_tree(oid)
+    root = MIB[oid]
+    nodes = [root] + root.descendants.to_a
+    puts ERB.new(Net::SNMP::MIB::Templates::DESCRIBE, nil, "-").result(binding)
+  end
+
+  # Issue an SNMP GET Request
+  # `oids` argument may be a single oid, or an array
   def get(oids, options = {})
-    oids = Array(oids)
-    @pdu = session.get(oids)
-    @pdu.print
-    @pdu.error? ? :error : :success
+    each_session do |session|
+      @pdu = session.get(oids)
+      @pdu.print
+      puts "ERROR" if @pdu.error?
+    end
+    "GET"
   end
 
+  # Issue an SNMP GETNEXT Request
+  # `oids` argument may be a single oid, or an array
+  def get_next(oids, options = {})
+    each_session do |session|
+      @pdu = session.get_next(oids)
+      @pdu.print
+      puts "ERROR" if @pdu.error?
+    end
+    "GETNEXT"
+  end
+
+  # Issue an SNMP GETBULK Request
+  # Supports typical options, plus
+  #  - `:non_repeaters` The number of non-repeated oids in the request
+  #  - `:max_repititions` The maximum repititions to return for all repeaters
+  # Note that the non-repeating varbinds must be added first.
+  def get_bulk(oids, options = {})
+    each_session do |session|
+      @pdu = session.get_bulk(oids)
+      @pdu.print
+      puts "ERROR" if @pdu.error?
+    end
+    "GETBULK"
+  end
+
+  # Issue repeated getnext requests on each oid passed in until
+  # the result is no longer a child.  Returns a hash with the numeric
+  # oid strings as keys.
+  def walk(oids, options = {})
+    each_session do |session|
+      session.walk(oids).each { |oid, value|
+        puts "#{oid} = #{value}"
+      }
+    end
+    "WALK"
+  end
+
+  # Issue an SNMP Set Request.
+  # - varbinds: An single varbind, or an array of varbinds, each of which may be
+  #   + An Array of length 3 `[oid, type, value]`
+  #   + An Array of length 2 `[oid, value]`
+  #   + Or a Hash `{oid: oid, type: type, value: value}`
+  #     * Hash syntax is the same as supported by PDU.add_varbind
+  #     * If type is not supplied, it is infered by the value
   def set(varbinds, options = {})
-    @pdu = session.set(varbinds)
-    @pdu.print
-    @pdu.error? ? :error : :success
+    each_session do |session|
+      @pdu = session.set(varbinds)
+      @pdu.print
+      puts "ERROR" if @pdu.error?
+    end
+    "SET"
+  end
+
+  private
+
+  def each_session(&block)
+    unless sessions.count > 0
+      puts NO_SESSION_PROMPT
+      raise 'No active session'
+    end
+
+    sessions.each_with_index do |session, i|
+      name = "#{session.peername}"
+      hrule = (['-'] * name.length).join ''
+      # Add a blank line before the first result
+      puts if i == 0
+      puts hrule
+      puts name
+      puts hrule
+      block[session]
+      # Add a blank line after each result
+      puts
+    end
+
+    nil
   end
 end
 

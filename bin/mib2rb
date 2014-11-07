@@ -7,41 +7,10 @@ require 'erb'
 require 'logger'
 
 Net::SNMP.init
-
-default_template = '
-<% nodes.each do |node| -%>
-<%= node.module.nil? ? "" : "#{node.module.name}::" %><%= node.label %>
-  - oid:       <%= node.oid %>
-  - type:      <%= node.type %>
-  - file:      <%= node.module.file unless node.module.nil? %>
-  - descr:     <%= node.description %>
-  - enums:     <%= node.enums.map { |e| "#{e[:label]}(#{e[:value]})" }.join(", ") %>
-  - parent:    <%= node.parent.oid unless node.parent.nil? %>
-  - peers:     <%= node.peers.map { |n| "#{n.label}(#{n.subid})"}.join(", ") %>
-  - next:      <%= node.next.oid unless node.next.nil? %>
-  - next_peer: <%= node.next_peer.oid unless node.next_peer.nil? %>
-  - children:  <%= node.children.map { |n| "#{n.label}(#{n.subid})"}.join(", ") %>
-<% end -%>
-'.sub!("\n", "") # Remove leading newline
-
-json_template = '
-[
-<% nodes.each_with_index { |node, index| -%>
-<%= ",\n" if index > 0 -%>
-  {
-    "name": "<%= node.module.nil? ? "" : "#{node.module.name}::" %><%= node.label %>",
-    "oid": "<%= node.oid %>",
-    "type": <%= node.type %>,
-<% if node.enums && node.enums.count > 0 -%>
-    "enums": { <%= node.enums.map { |enum| "\"#{enum[:label]}\": #{enum[:value]}" }.join(", ") %> },
-<% end -%>
-    "parent": <%= node.parent ? %Q["#{node.parent.oid}"] : "undefined" %>
-  }<% } -%>
-
-]
-'.sub!("\n", "")
+Templates = Net::SNMP::MIB::Templates
 
 usage = <<USAGE
+
 Usage: mib2rb [OPTION]... ROOT_NODE [ERB_FILE]
 
 Description
@@ -81,10 +50,10 @@ Arguments
                Default:  Builtin template specifying human readable output.
                          (See below)
 
-Default ERB_FILE Template:
+Default ERB_FILE Template
+-------------------------
 
-#{default_template.each_line.map { |l| "  #{l}" }.join}
-
+#{Templates::DESCRIBE}
 USAGE
 
 root_node = nil
@@ -122,9 +91,9 @@ OptionParser.new do|opts|
   opts.on('-f', '--format FORMAT') do |format|
     case format
     when /^d(efault)?$/i
-      erb_template = default_template
+      erb_template = Templates::DESCRIBE
     when /^j(son)?$/i
-      erb_template = json_template
+      erb_template = Templates::JSON
     else
       puts "Invalid format: #{format}"
       puts
@@ -139,7 +108,7 @@ case ARGV.length
 when 1
   root_node = Net::SNMP::MIB.get_node(ARGV[0])
   # If format wasn't set by -f option, default it here
-  erb_template ||= default_template
+  erb_template ||= Templates::DESCRIBE
 when 2
   root_node = Net::SNMP::MIB.get_node(ARGV[0])
   erb_template = File.read(ARGV[1])
