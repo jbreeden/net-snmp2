@@ -96,19 +96,49 @@ EOF
   def manage(options)
     options = {:peername => options} if options.kind_of?(String)
     sessions << Session.open(options)
-    "Opened session for #{options[:peername]}"
+    "Opened session to manage peer: #{options[:peername]}"
   end
 
   # Close the session with the given `peername`
   def close(peername)
-    session = sessions.find { |sess| sess.peername.to_s == peername.to_s }
-    if (session)
-      session.close
-      sessions.delete(session)
-      "Closed session for #{options[:peername]}"
-    else
-      puts "No session active for '#{peername}'"
+    case peername
+    when Numeric
+      index = peername
+      if index < (sessions.length)
+        session = sessions[index]
+        session.close
+        sessions.delete(session)
+        "Closed session for peer: #{session.peername}"
+      else
+        "Invalid session index #{index}. Use `peers` to list active sessions."
+      end
+    when String
+      session = sessions.find { |sess| sess.peername.to_s == peername.to_s }
+      if (session)
+        session.close
+        sessions.delete(session)
+        "Closed session for peer: #{session.peername}"
+      else
+        "No session active for '#{peername}'. Use `peers` to list active sessions."
+      end
     end
+  end
+
+  # List the peers currently being managed
+  def peers
+    if sessions.count > 0
+      puts
+      puts "Currently Managing"
+      puts "------------------"
+      puts
+      sessions.each_with_index do |session, i|
+        puts "[#{i}] #{session.peername}"
+      end
+      puts
+    else
+      puts "No active sessions"
+    end
+    nil
   end
 
   # Translates a numerical oid to it's MIB name, or a name to numerical oid

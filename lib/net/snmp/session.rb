@@ -62,9 +62,13 @@ module Net
         @retries = options[:retries] || 5
         @requests = {}
         @peername = options[:peername] || 'localhost'
-        options[:port] ||= 161
-        @port = options[:port]
-        @peername = "#{@peername}:#{options[:port]}"
+        # If the port is supplied in the peername, don't
+        # worry about the port option (avoids appending two port numbers)
+        unless @peername[':']
+          options[:port] ||= 161
+          @port = options[:port]
+          @peername = "#{@peername}:#{options[:port]}"
+        end
         @community = options[:community] || "public"
         options[:community_len] = @community.length
         options[:version] ||= Constants::SNMP_VERSION_2c
