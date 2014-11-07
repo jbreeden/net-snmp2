@@ -23,7 +23,8 @@ module Net
           end
         else
           if Wrapper.get_node(@oid, @pointer, @length_pointer) == 0
-            Wrapper.snmp_perror(@oid)
+            #Wrapper.snmp_perror(@oid)
+            raise "No such node: #{oid}"
           end
           @oid = to_s
         end
