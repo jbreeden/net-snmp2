@@ -26,21 +26,23 @@ module Net
         #     pdu.print
         #   end
         #
-        # Options:
-        # * +peername+ - hostname
-        # * +community+ - snmp community string.  Default is public
-        # * +version+ - snmp version.  Possible values include 1, '2c', and 3. Default is 1.
-        # * +timeout+ - snmp timeout in seconds
-        # * +retries+ - snmp retries.  default = 5
-        # * +security_level+ - SNMPv3 only. default = Net::SNMP::Constants::SNMP_SEC_LEVEL_NOAUTH
-        # * +auth_protocol+ - SNMPv3 only. default is nil (usmNoAuthProtocol). Possible values include :md5, :sha1, and nil
-        # * +priv_protocol+ - SNMPv3 only. default is nil (usmNoPrivProtocol). Possible values include :des, :aes, and nil
-        # * +context+ - SNMPv3 only.
-        # * +username+ - SNMPv3 only.
-        # * +auth_password+ - SNMPv3 only.
-        # * +priv_password+ - SNMPv3 only.
-        # Returns:
-        # Net::SNMP::Session
+        # Arguments
+        # - options: A Hash or String object
+        #   + As a Hash, supports the following keys
+        #     - peername: hostname
+        #     - community: snmp community string.  Default is public
+        #     - version: snmp version.  Possible values include 1, '2c', and 3. Default is 1.
+        #     - timeout: snmp timeout in seconds
+        #     - retries: snmp retries.  default = 5
+        #     - security_level: SNMPv3 only. default = Net::SNMP::Constants::SNMP_SEC_LEVEL_NOAUTH
+        #     - auth_protocol: SNMPv3 only. default is nil (usmNoAuthProtocol). Possible values include :md5, :sha1, and nil
+        #     - priv_protocol: SNMPv3 only. default is nil (usmNoPrivProtocol). Possible values include :des, :aes, and nil
+        #     - context: SNMPv3 only.
+        #     - username: SNMPv3 only.
+        #     - auth_password: SNMPv3 only.
+        #     - priv_password: SNMPv3 only.
+        #
+        # Returns a new Net::SNMP::Session
         def open(options = {})
           session = new(options)
           if Net::SNMP::thread_safe
@@ -58,6 +60,7 @@ module Net
       end
 
       def initialize(options = {})
+        options = {:peername => options} if options.kind_of?(String)
         @timeout = options[:timeout] || 1
         @retries = options[:retries] || 5
         @requests = {}
@@ -270,7 +273,6 @@ module Net
       def error(msg, options = {})
         #Wrapper.snmp_sess_perror(msg, @sess.pointer)
         err =  Error.new({:session => self}.merge(options))
-        err.print
         raise err, msg
       end
 
@@ -548,13 +550,13 @@ module Net
       end
 
       def get_error
-          errno_ptr = FFI::MemoryPointer.new(:int)
-          snmp_err_ptr = FFI::MemoryPointer.new(:int)
-          msg_ptr = FFI::MemoryPointer.new(:pointer)
-          Wrapper.snmp_sess_error(@struct.pointer, errno_ptr, snmp_err_ptr, msg_ptr)
-          @errno = errno_ptr.read_int
-          @snmp_err = snmp_err_ptr.read_int
-          @snmp_msg = msg_ptr.read_pointer.read_string
+        errno_ptr = FFI::MemoryPointer.new(:int)
+        snmp_err_ptr = FFI::MemoryPointer.new(:int)
+        msg_ptr = FFI::MemoryPointer.new(:pointer)
+        Wrapper.snmp_sess_error(@struct.pointer, errno_ptr, snmp_err_ptr, msg_ptr)
+        @errno = errno_ptr.null? ? nil : errno_ptr.read_int
+        @snmp_err = snmp_err_ptr.null? ? nil : snmp_err_ptr.read_int
+        @snmp_msg = (msg_ptr.null? || msg_ptr.read_pointer.null?) ? nil : msg_ptr.read_pointer.read_string
       end
 
     end

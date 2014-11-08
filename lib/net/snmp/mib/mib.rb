@@ -15,13 +15,13 @@ module Net
         Wrapper.read_all_mibs
       end
 
-      # Get an OID object representing `oid`
+      # Get an OID object representing the MIB node containing `oid`
       # - `oid` argument may be a numerical oid, or the MIB name
       def self.get_node(oid)
         Node.get_node(oid)
       end
 
-      # Get an OID object representing `oid`
+      # Get an OID object representing the MIB node containing `oid`
       # - `oid` argument may be a numerical oid, or the MIB name
       def self.[](oid)
         Node.get_node(oid)
@@ -31,9 +31,11 @@ module Net
       def self.translate(oid)
         node = Node.get_node(oid)
         if oid =~ /^[0-9.]*$/
-          node.label
+          # Node label + instance indexes from argument
+          "#{node.label}#{oid.sub(node.oid.to_s, "")}"
         else
-          node.oid.to_s
+          # Node OID + instance indexes from argument
+          "#{node.oid.to_s}#{oid.sub(node.label.to_s, "")}"
         end
       end
 

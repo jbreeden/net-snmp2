@@ -10,7 +10,7 @@ module Net
           @snmp_err = opts[:session].snmp_err
           @snmp_msg = opts[:session].error_message
         end
-
+        print
       end
 
       def print
@@ -27,5 +27,3 @@ module Net
     end
   end
 end
-
-      

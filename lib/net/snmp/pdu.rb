@@ -188,7 +188,7 @@ module Net
 
       def print
         varbinds.each do |v|
-          puts "#{v.oid} = #{v.value}"
+          puts "#{MIB.translate(v.oid.to_s)}(#{v.oid}) = #{v.value}"
         end
       end
     end

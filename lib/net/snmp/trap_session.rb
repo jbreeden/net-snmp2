@@ -7,8 +7,10 @@ module Net
       # * :peername The address where the trap will be sent
       # * :port     The port where the trap will be sent (default = 162)
       def initialize(options = {})
-        port = options[:port] || 162
-        options[:peername] = "#{options[:peername]}:#{port}"
+        # Unless the port was supplied in the peername...
+        unless options[:peername][":"]
+          options[:port] ||= 162
+        end
         super(options)
       end
 
@@ -56,8 +58,8 @@ module Net
 
       private
       def build_trap_pdu(pdu, options = {})
-        pdu.add_varbind(:oid => OID.new('sysUpTime.0'), :type => Constants::ASN_TIMETICKS, :value => 42)
-        pdu.add_varbind(:oid => OID.new('snmpTrapOID.0'), :type => Constants::ASN_OBJECT_ID, :value => options[:oid])
+        #pdu.add_varbind(:oid => OID.new('sysUpTime.0'), :type => Constants::ASN_TIMETICKS, :value => 42)
+        #pdu.add_varbind(:oid => OID.new('snmpTrapOID.0'), :type => Constants::ASN_OBJECT_ID, :value => options[:oid])
         if options[:varbinds]
           options[:varbinds].each do |vb|
             pdu.add_varbind(vb)

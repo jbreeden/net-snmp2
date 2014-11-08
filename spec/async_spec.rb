@@ -16,7 +16,6 @@ describe "async" do
     end
 
     it "get should return an error" do
-      Net::SNMP.thread_safe = true
       did_callback = false
       sess = Net::SNMP::Session.open(:peername => 'www.yahoo.com', :timeout => 1, :retries => 0) do |sess|
         sess.get("sysDescr.0") do |op, pdu|
@@ -29,7 +28,6 @@ describe "async" do
 
       pdu.should eql(0)
       did_callback.should eq(true)
-      Net::SNMP.thread_safe = false
     end
 
     it "getnext should work" do

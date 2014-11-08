@@ -51,15 +51,14 @@ describe "synchronous calls" do
 
     it "getbulk should succeed with multiple oids" do
       Net::SNMP::Session.open(:peername => "localhost" , :version => '2c', :community => 'public') do |sess|
-        result = sess.get_bulk(["ifIndex", "ifDesc", "ifType"], :max_repetitions =>3)
-        result.varbinds.size.should eql(9)
+        result = sess.get_bulk(["ifIndex", "ifType"], :max_repetitions =>3)
+        result.varbinds.size.should eql(6)
       end
     end
 
-    it "get should return error with invalid oid" do
+    it "rasises an when a non-existant MIB variable is requested" do
       Net::SNMP::Session.open(:peername => "test.net-snmp.org", :community => "demopublic" ) do |sess|
-        result = sess.get(["XXXsysDescr.0"])  #misspelled
-        result.should be_error
+        expect { sess.get(["XXXsysDescr.0"]) }.to raise_error
       end
     end
 

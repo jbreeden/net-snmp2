@@ -1,10 +1,10 @@
 #! /usr/bin/env ruby
 
-$: << '../lib'
-require 'net-snmp2'
+$: << "#{File.dirname(__FILE__)}/../lib"
+require 'logger'
 require 'optparse'
 require 'erb'
-require 'logger'
+require 'net-snmp2'
 
 Net::SNMP.init
 Templates = Net::SNMP::MIB::Templates
