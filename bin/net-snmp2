@@ -9,7 +9,7 @@ require 'net-snmp2'
 require 'net/snmp/repl/manager_repl'
 
 usage = '
-Usage: net-snmp2 -v [VERSION] -c [COMMUNITY] [HOST[:PORT]]
+Usage: net-snmp2 [-v VERSION] [-c COMMUNITY] [HOST[:PORT]]
 '.sub("\n", "")
 
 # Default option values
@@ -38,6 +38,11 @@ OptionParser.new do |opt|
 
   opt.on("-c COMMUNITY") do |community|
     options[:community] = community
+  end
+
+  opt.on('-h') do
+    puts usage
+    exit
   end
 
 end.parse!
