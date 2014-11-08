@@ -14,7 +14,6 @@ module SNMP
 
 class Agent
   include Debug
-  include Singleton
 
   attr_accessor :port, :socket, :packet, :providers
 

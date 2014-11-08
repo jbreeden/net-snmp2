@@ -20,12 +20,12 @@ module Net
         when FFI::Pointer
           @struct = Wrapper::SnmpPdu.new(pdu_type)
           @command = @struct.command
-          v = @struct[:variables]
+          v = @struct.variables
           if v
             @varbinds << Varbind.from_pointer(v)
           end
 
-          while( !(v = Wrapper::VariableList.new(v).next_variable).null? )
+          while( !(v = v.next_variable).null? )
             @varbinds << Varbind.from_pointer(v)
           end
         when Fixnum

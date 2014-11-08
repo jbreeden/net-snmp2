@@ -3,7 +3,6 @@ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
 require 'net-snmp2'
 require 'rspec'
-require 'rspec/autorun'
 
 # Trap tests fail randomly due to race conditions,
 # setting thread_safe should fix this

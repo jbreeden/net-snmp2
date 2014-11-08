@@ -40,7 +40,7 @@ module Wrapper
 
   class VariableList < NiceFFI::Struct
     layout(
-      :next_variable, :pointer,
+      :next_variable, VariableList.typed_pointer,
       :name, :pointer,
       :name_length, :size_t,
       :type, :u_char,

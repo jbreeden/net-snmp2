@@ -1,48 +1,77 @@
 $: << '../lib'
 require 'net-snmp2'
 
+# Initialize SNMP and give it a logger
 Net::SNMP.init
 Net::SNMP::Debug.logger = Logger.new(STDOUT)
 Net::SNMP::Debug.logger.level = Logger::INFO
 
-agent = Net::SNMP::Agent.instance
+agent = Net::SNMP::Agent.new
 
+# If the program gets the interrupt signal, tell the agent
+# to stop so the program can exit.
 trap(:INT) {
   agent.stop
 }
 
+# Using an in-memory Hash to represent our MIB storage
 mib = {
   '1.3.1.1' => 1,
   '1.3.1.2' => "I'm a string"
 }
 
-# Set up the behavior for all requests coming in
-# with varbinds under the '1.3' oid.
+# The `provide` function creates a provider the Agent can
+# delegate to when a request has a varbind that lives under
+# the given OID. Note that all get/set handlers are called
+# once for each varbind, not once per message. This means
+# the agent may call multiple providers to satisfy a single
+# message. It also means that the code for iterating over
+# a request's varbinds, setting errindex values, etc, is
+# encapsulated in the Agent code, and you do not have to
+# implement it yourself.
 agent.provide '1.3' do
 
   get do
+    # `oid` is provided by the DSL as the OID object for the current varbind
+    #
+    # Note: The RequestContext (in which all agent handlers are run)
+    # includes Net::SNMP::Debug, so you can use the info, warn, debug,
+    # error, and fatal logging methods.
     info "Got a get request for #{oid}"
+
     if mib.has_key? oid_str
-        reply(mib[oid_str])
+      # `reply` is provided by the DSL to set the response for the current varbind.
+      # For a GetBulk request, you can use it's alias `add`, which is more natural
+      # in that context, when you may be setting multiple response varbinds for a
+      # single requested OID.
+      #
+      # `oid_str` is alo provided, and is the same as `oid.to_s`
+      reply(mib[oid_str])
     else
+      # `no_such_object` can be used to indicate that the variable requested
+      # does not exist in the MIB on this machine. See also: `no_such_instance`
       no_such_object
     end
   end
 
   set do
-    puts "Get a set request for #{oid} = #{value}"
+    info "Get a set request for #{oid} = #{value}"
 
     # Randomly fail 20% of the time
     if rand > 0.8
       info "Decided to fail... Sending WRONGTYPE errstat"
+      # `error` sets the errno of the reply to the given integer.
+      # The Agent code handles setting the errindex behind the scenes,
+      # so you don't have to set it here.
       error Net::SNMP::Constants::SNMP_ERR_WRONGTYPE
       next
     end
 
     if mib.has_key? oid_str
+      # Saving the set value in our MIB storage
       mib[oid_str] = value
-      # `ok` copies the current varbind to the response
-      # (indicated success to the manager)
+      # `ok` copies the current varbind to the response,
+      # indicating success to the manager. (Aliased as `echo`)
       ok
     else
       no_such_object
@@ -51,4 +80,6 @@ agent.provide '1.3' do
 
 end
 
+# Start the agent's run loop, listening to port 161
+# Aliases: `run`, `start`
 agent.listen(161)
