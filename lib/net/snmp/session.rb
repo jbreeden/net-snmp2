@@ -3,16 +3,13 @@ require 'forwardable'
 require 'pp'
 module Net
   module SNMP
+    # Provides an API for managing SNMP agents
     class Session
-      # == SNMP Session
-      #
-      # Provides API for interacting with a host with snmp
       extend Forwardable
       include Net::SNMP::Debug
       attr_accessor :struct, :callback, :requests, :peername, :port, :community
       attr_reader :version
       def_delegator :@struct, :pointer
-      #@sessions = []
       @lock = Mutex.new
       @sessions = {}
 

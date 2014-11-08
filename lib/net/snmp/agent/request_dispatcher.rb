@@ -11,14 +11,16 @@ module Net::SNMP
       context.response_pdu = response_pdu
       message.pdu.varbinds.each do |vb|
         context.varbind = vb
-        provider = providers.select { |p| vb.oid.to_s.start_with?(p.oid.to_s)}
-        handler = providers[0].handler_for(message)
+        provider = providers.find { |p| p.oid == :all || vb.oid.to_s.start_with?(p.oid.to_s) }
+        handler = provider.handler_for(message) if provider
         if handler
           context.instance_exec(&handler)
         else
-          Debug.warn "No handler for command type: #{message.pdu.command}"
+          Debug.warn "No handler for command: #{message.pdu.command} @ #{vb.oid}"
+          context.no_such_object
         end
       end
+
       response_pdu
     end
 

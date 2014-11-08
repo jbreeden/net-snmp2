@@ -17,6 +17,8 @@ require 'logger'
   snmp/session
   snmp/trap_session
   snmp/varbind
+  snmp/listener
+  snmp/trap_handler
   snmp/mib/mib
   snmp/mib/node
   snmp/mib/module

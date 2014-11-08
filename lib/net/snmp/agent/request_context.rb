@@ -82,7 +82,7 @@ module Net::SNMP
       add_varbind(oid: oid, type: Constants::SNMP_NOSUCHINSTANCE)
     end
 
-    # Adds a varbind to the response PDU
+    # Adds a varbind to the response PDU.
     # MUST use this method (or one that delegates to it)
     # to set response varbinds on the response_pdu to make sure
     # the variable_index is maintained automatically.

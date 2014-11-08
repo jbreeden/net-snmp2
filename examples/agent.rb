@@ -22,7 +22,10 @@ mib = {
 
 # The `provide` function creates a provider the Agent can
 # delegate to when a request has a varbind that lives under
-# the given OID. Note that all get/set handlers are called
+# the given OID. (Or, for all requests if given `:all`,
+# which is the default)
+#
+# Notes: All get/set handlers are called
 # once for each varbind, not once per message. This means
 # the agent may call multiple providers to satisfy a single
 # message. It also means that the code for iterating over
@@ -60,8 +63,8 @@ agent.provide '1.3' do
     # Randomly fail 20% of the time
     if rand > 0.8
       info "Decided to fail... Sending WRONGTYPE errstat"
-      # `error` sets the errno of the reply to the given integer.
-      # The Agent code handles setting the errindex behind the scenes,
+      # `error` sets the error status of the reply to the given integer.
+      # The Agent code handles setting the error index behind the scenes,
       # so you don't have to set it here.
       error Net::SNMP::Constants::SNMP_ERR_WRONGTYPE
       next
