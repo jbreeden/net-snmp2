@@ -3,7 +3,7 @@ module Net::SNMP
     include Net::SNMP::Debug
     extend Forwardable
 
-    attr_accessor :listener, :v1_handler, :v2_handler, :trap
+    attr_accessor :listener, :v1_handler, :v2_handler, :message, :pdu
     def_delegators :listener, :start, :run, :listen, :stop, :kill
 
     def self.listen(port = 162, interval = 2, max_packet_size = 65_000, &block)
@@ -19,11 +19,14 @@ module Net::SNMP
     private
 
     def process_trap(message, from_address, from_port)
-      self.trap = message
+      self.message = message
+      self.pdu = message.pdu
       if message.pdu.command == Net::SNMP::Constants::SNMP_MSG_TRAP
-        self.instance_eval(&v1_handler)
+        V1TrapDsl.new(message).instance_eval(&v1_handler)
       elsif message.pdu.command == Net::SNMP::Constants::SNMP_MSG_TRAP2
-        self.instance_eval(&v2_handler)
+        V2TrapDsl.new(message).instance_eval(&v2_handler)
+      else
+        warn "Trap handler receive invalid command: #{message.pdu.command}"
       end
     end
 

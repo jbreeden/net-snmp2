@@ -12,6 +12,40 @@ module Net
         OID.new(OID.read_pointer(ptr, sub_id_count))
       end
 
+      def self.oid_size
+        unless @oid_size
+          determine_oid_size
+        end
+        @oid_size
+      end
+
+      def self.determine_oid_size
+        if Net::SNMP.initialized?
+          oid_ptr = FFI::MemoryPointer.new(:ulong, 8)
+          length_ptr = FFI::MemoryPointer.new(:size_t, 1)
+          length_ptr.write_int(oid_ptr.total)
+
+          Wrapper.read_objid('1.1', oid_ptr, length_ptr)
+          oid_str = oid_ptr.read_array_of_uint8(oid_ptr.total).map{|byte| byte.to_s(2).rjust(8, '0') }.join('')
+
+          @oid_size = (oid_str[/10*1/].length - 1) / 8
+        else
+          @oid_size = FFI::MemoryPointer.new(:ulong).total
+          warn "SNMP not initialized\n" + <<-WARNING
+            Cannot determine OID sub-id size, assuming common case of sizeof(ulong)
+            On this platform, sizeof(ulong) = #{@oid_size} bytes
+            To avoid this warning, call `Net::SNMP.init`
+            WARNING
+        end
+      end
+
+      def self.read_pointer(pointer, sub_id_count)
+        unless @sub_id_bit_width
+          @sub_id_bit_width = OID.oid_size * 8
+        end
+        pointer.send("read_array_of_uint#{@sub_id_bit_width}", sub_id_count).join('.')
+      end
+
       def initialize(oid)
         @oid = oid
         @pointer = FFI::MemoryPointer.new(Net::SNMP::OID.oid_size * Constants::MAX_OID_LEN)
@@ -23,7 +57,6 @@ module Net
           end
         else
           if Wrapper.get_node(@oid, @pointer, @length_pointer) == 0
-            #Wrapper.snmp_perror(@oid)
             raise "No such node: #{oid}"
           end
           @oid = to_s
@@ -59,12 +92,19 @@ module Net
         MIB::Node.get_node(oid)
       end
 
+      # The instance index string
+      # Note that some MIB nodes specify the instance implicitly,
+      # like sysUpTimeInstance. So, this may be an empty string.
       def index
-        oid.sub(node.oid.name + ".","")
+        # Strip the name
+        index = oid.sub(node.oid.name, '')
+        # Strip any leading dot
+        index.sub(/^\./, '')
       end
 
+      # The label for the this OID. Includes any instance indexes.
       def label
-        node.label + "." + index
+        "#{node.label}#{index.length > 0 ? "." + index : ""}"
       end
 
       def <=>(o)
@@ -82,40 +122,6 @@ module Net
 
       def parent_of?(o)
         o.to_s =~ /^#{self.to_s}\./
-      end
-
-      def self.oid_size
-        unless @oid_size
-          determine_oid_size
-        end
-        @oid_size
-      end
-
-      def self.determine_oid_size
-        if Net::SNMP.initialized?
-          oid_ptr = FFI::MemoryPointer.new(:ulong, 8)
-          length_ptr = FFI::MemoryPointer.new(:size_t, 1)
-          length_ptr.write_int(oid_ptr.total)
-
-          Wrapper.read_objid('1.1', oid_ptr, length_ptr)
-          oid_str = oid_ptr.read_array_of_uint8(oid_ptr.total).map{|byte| byte.to_s(2).rjust(8, '0') }.join('')
-
-          @oid_size = (oid_str[/10*1/].length - 1) / 8
-        else
-          @oid_size = FFI::MemoryPointer.new(:ulong).total
-          warn "SNMP not initialized\n" + <<-WARNING
-            Cannot determine OID sub-id size, assuming common case of sizeof(ulong)
-            On this platform, sizeof(ulong) = #{@oid_size} bytes
-            To avoid this warning, call `Net::SNMP.init`
-            WARNING
-        end
-      end
-
-      def self.read_pointer(pointer, sub_id_count)
-        unless @sub_id_bit_width
-          @sub_id_bit_width = OID.oid_size * 8
-        end
-        pointer.send("read_array_of_uint#{@sub_id_bit_width}", sub_id_count).join('.')
       end
     end
   end

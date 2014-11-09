@@ -1,7 +1,12 @@
-# RequestContext class implements a DSL for handling requests in a Provider
-
 module Net::SNMP
-  class RequestContext
+
+# A ProviderDsl represents the context in which each handler
+# for the varbinds of a single message are executed. The ProviderDsl
+# object lives only as long as a single message is being processed,
+# and offers convenience functions for accessing the members of the
+# request as well as providing responses for each varbind in the request.
+
+  class ProviderDsl
     include Debug
 
     def initialize
@@ -11,26 +16,34 @@ module Net::SNMP
     # Getters
     # -------
 
-    # Notes:
-    # - `varbind` is the current varbind. The RequestDispatcher
-    #   resets this value for each varbind in the request, then
-    #   execs the approriate provider's handler for that varbind
-    #   in the context of this RequestContext object.
+    # `varbind` is the current varbind. The RequestDispatcher
+    # resets this value for each varbind in the request, then
+    # execs the approriate provider's handler for that varbind
+    # in the context of this ProviderDsl object.
+    attr_accessor :varbind
 
-    attr_accessor :message, :varbind, :response_pdu
+    # The message object for the current request.
+    attr_accessor :message
 
+    # The response PDU being constructed for the current request.
+    attr_accessor :response_pdu
+
+    # The PDU for the current request.
     def pdu
       message.pdu
     end
 
+    # The OID of the current varbind being processed.
     def oid
       varbind.oid
     end
 
+    # The OID of the current varbind being processed as a string.
     def oid_str
       varbind.oid.to_s
     end
 
+    # The value of the current varbind being processed.
     def value
       varbind.value
     end
@@ -39,6 +52,7 @@ module Net::SNMP
     # -------
 
     # Used to set a varbind on the response packet.
+    #
     # - If a hash is supplied, accepts the same options as
     #   PDU#add_varbind, except that if no oid is supplied,
     #   the oid from the current varbind is used.

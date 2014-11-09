@@ -17,6 +17,10 @@ module Debug
     Debug.logger.warn msg if Debug.logger
   end
 
+  def error(msg)
+    Debug.logger.error msg if Debug.logger
+  end
+
   def fatal(msg)
     Debug.logger.fatal msg if Debug.logger
   end

@@ -18,7 +18,9 @@ require 'logger'
   snmp/trap_session
   snmp/varbind
   snmp/listener
-  snmp/trap_handler
+  snmp/trap_handler/trap_handler
+  snmp/trap_handler/v1_trap_dsl
+  snmp/trap_handler/v2_trap_dsl
   snmp/mib/mib
   snmp/mib/node
   snmp/mib/module
@@ -26,10 +28,10 @@ require 'logger'
   snmp/dispatcher
   snmp/agent/agent
   snmp/agent/provider
-  snmp/agent/request_context
+  snmp/agent/provider_dsl
   snmp/agent/request_dispatcher
   snmp/message
-).each_with_index do |f|
+).each do |f|
   require "#{File.dirname(__FILE__)}/net/#{f}"
 end
 

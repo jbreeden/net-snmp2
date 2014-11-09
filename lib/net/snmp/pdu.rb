@@ -1,12 +1,7 @@
 module Net
   module SNMP
+    #  Wrapper around netsnmp_pdu.
     class PDU
-      # == Represents an SNMP PDU
-      #
-      #  Wrapper around netsnmp_pdu.
-      # * +varbinds+ returns a list of variable bindings
-      # * +errstat+ returns the error code.  See constants.rb
-      # * +errindex+ returns the index of the varbind causing the error.
       extend Forwardable
       include Net::SNMP::Debug
       attr_accessor :struct, :varbinds, :callback, :command
@@ -38,7 +33,7 @@ module Net
 
       # Specifies the number of non-repeating, regular objects at the start of
       # the variable list in the request.
-      # (For getbulk requests, non-repeaters is stored in errstat)
+      # (For getbulk requests only, non-repeaters is stored in errstat location)
       def non_repeaters
         @struct.errstat
       end
@@ -49,7 +44,7 @@ module Net
 
       # The number of iterations in the table to be read for the repeating
       # objects that follow the non-repeating objects.
-      # (For getbulk requests, max-repititions are stored in errindex)
+      # (For getbulk requests only, max-repititions are stored in errindex location)
       def max_repetitions=(mr)
         @struct.errindex = mr
       end
@@ -58,25 +53,67 @@ module Net
         @struct.errindex
       end
 
+      # Sets the enterprise OID of this PDU
+      # (Valid for SNMPv1 traps only)
       def enterprise=(e_oid)
-        @enterprise = e_oid
         @struct.enterprise = e_oid.pointer
         @struct.enterprise_length = e_oid.size
       end
 
+      # The enterprise OID of this PDU
+      # (Valid for SNMPv1 traps only)
       def enterprise
-        @enterprise
+        OID.from_pointer(@struct.enterprise, @struct.enterprise_length)
       end
 
+      # Sets the address of the agent that sent this PDU
+      # (Valid for SNMPv1 traps only)
       def agent_addr=(addr)
-        @struct.agent_addr = addr.split('.').pack("CCCC")
-        @agent_addr = addr
+        # @struct.agent_addr is a binary array of 4 characters,
+        # so pack the provided string into four bytes and we can assign it
+        @struct.agent_addr = addr.split('.').map{ |octet| octet.to_i }.pack("CCCC")
       end
 
+      # The address of the agent that sent this PDU
+      # (Valid for SNMPv1 traps only)
       def agent_addr
-        @agent_addr
+        # @struct.agent_addr is a binary array of 4 characters,
+        # to_a converts this to a ruby array of Integers, then join get's us
+        # back to the string form
+        @struct.agent_addr.to_a.join('.')
       end
 
+      # The uptime for the PDU
+      # (Only valid for SNMPv1 traps)
+      def uptime
+        @struct.time
+      end
+
+      # Returns true if pdu is in error
+      def error?
+        self.errstat != 0
+      end
+
+      # Sets the pdu errstat
+      def error=(value)
+        @struct.errstat = value
+      end
+      alias errstat= error=
+      alias error_status= error=
+
+      # Sets the error index
+      def error_index=(index)
+        @struct.errindex = index
+      end
+      alias errindex= error_index=
+
+      # A descriptive error message
+      def error_message
+        Wrapper::snmp_errstring(self.errstat)
+      end
+
+      # Tries to delegate missing methods to the underlying Wrapper::SnmpPdu object.
+      # If it does not respond to the method, calls super.
       def method_missing(m, *args)
         if @struct.respond_to?(m)
           @struct.send(m, *args)
@@ -148,33 +185,7 @@ module Net
         oid = options[:oid].kind_of?(OID) ? options[:oid] : OID.new(options[:oid])
         var_ptr = Wrapper.snmp_pdu_add_variable(@struct.pointer, oid.pointer, oid.length_pointer.read_int, options[:type], value, value_len)
         varbind = Varbind.new(var_ptr)
-        #Wrapper.print_varbind(varbind.struct)
         varbinds << varbind
-      end
-
-      # Returns true if pdu is in error
-      def error?
-        self.errstat != 0
-      end
-
-      # Sets the pdu errstat
-      def error=(value)
-        @struct.errstat = value
-      end
-      # Accept the name from the struct
-      alias errstat= error=
-      # Accept the fully spelled out version
-      alias error_status= error=
-
-      def error_index=(index)
-        @struct.errindex = index
-      end
-      # Accept the name from the struct
-      alias errindex= error_index=
-
-      # A descriptive error message
-      def error_message
-        Wrapper::snmp_errstring(self.errstat)
       end
 
       def print_errors
@@ -187,10 +198,20 @@ module Net
       end
 
       def print
+        puts "PDU"
+        if command == Constants::SNMP_MSG_TRAP
+            puts " - Enterprise: #{enterprise}"
+            puts " - Trap Type: #{trap_type}"
+            puts " - Specific Type: #{specific_type}"
+            puts " - Agent Addr: #{agent_addr}"
+        end
+
+        puts " - Varbinds:"
         varbinds.each do |v|
-          puts "#{MIB.translate(v.oid.to_s)}(#{v.oid}) = #{v.value}"
+          puts "   + #{MIB.translate(v.oid.to_s)}(#{v.oid}) = #{v.value}"
         end
       end
+
     end
   end
 end

@@ -37,7 +37,7 @@ agent.provide '1.3' do
   get do
     # `oid` is provided by the DSL as the OID object for the current varbind
     #
-    # Note: The RequestContext (in which all agent handlers are run)
+    # Note: The ProviderDsl (in which all agent handlers are run)
     # includes Net::SNMP::Debug, so you can use the info, warn, debug,
     # error, and fatal logging methods.
     info "Got a get request for #{oid}"

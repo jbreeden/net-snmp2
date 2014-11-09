@@ -1,11 +1,9 @@
-# Responsibility:
-#  - Implements a generic listener for incoming SNMP packets
-
 require 'timeout'
-require 'pp'
 
-module Net
-module SNMP
+module Net::SNMP
+
+# Implements a generic listener for incoming SNMP packets
+
   class Listener
     include Debug
 
@@ -17,6 +15,7 @@ module SNMP
       @killed = false
     end
 
+    # Starts the listener's run loop
     def start(port = 161, interval = 2, max_packet_size = 65_000)
       @interval = interval
       @socket = UDPSocket.new
@@ -28,11 +27,23 @@ module SNMP
     alias listen start
     alias run start
 
+    # Stops the listener's run loop
     def stop
       @killed = true
     end
     alias kill stop
 
+    # Sets the handler for all incoming messages.
+    #
+    # The block provided will be called back for each message as follows:
+    #
+    #   block[message, from_address, from_port]
+    #
+    # Where
+    #
+    # - `message` is the parsed Net::SNMP::Message object
+    # - `from_address` is a string representing the address of the host sending the request
+    # - `from_port` is the port the host sent the request from
     def on_message(&block)
       @callback = block
     end
@@ -49,17 +60,17 @@ module SNMP
             @packet = @socket.recvfrom(@max_packet_size)
           end
           return if @killed
-          time "Overall Processing Time" do
+          time "Message Processing" do
             message = Message.parse(@packet)
-            # `message_received` should be implemented by subclass
             @callback[message, @packet[1][3], @packet[1][1]] if @callback
           end
         rescue Timeout::Error => timeout
           next
+        rescue StandardError => ex
+          error "Error in listener.\n#{ex}\n  #{ex.backtrace.join("\n  ")}"
         end
       }
     end
 
   end
-end
 end

@@ -280,6 +280,8 @@ module Net
 
       MAX_NAME_LEN = 128
 
+      OID_SYS_UP_TIME_INSTANCE = '1.3.6.1.2.1.1.3.0'
+      OID_SNMP_TRAP_OID = '1.3.6.1.6.3.1.1.4.1.0'
     end
   end
 end
