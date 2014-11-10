@@ -16,12 +16,11 @@ module Net
           @struct = Wrapper::SnmpPdu.new(pdu_type)
           @command = @struct.command
           v = @struct.variables
-          if v
+          unless v.null?
             @varbinds << Varbind.from_pointer(v)
-          end
-
-          while( !(v = v.next_variable).null? )
-            @varbinds << Varbind.from_pointer(v)
+            while( !(v = v.next_variable).null? )
+              @varbinds << Varbind.from_pointer(v)
+            end
           end
         when Fixnum
           @struct = Wrapper.snmp_pdu_create(pdu_type)
@@ -55,9 +54,11 @@ module Net
 
       # Sets the enterprise OID of this PDU
       # (Valid for SNMPv1 traps only)
-      def enterprise=(e_oid)
-        @struct.enterprise = e_oid.pointer
-        @struct.enterprise_length = e_oid.size
+      def enterprise=(oid)
+        oid = OID.new(oid) if oid.kind_of?(String)
+        @struct.enterprise = FFI::LibC.calloc(oid.length, OID.oid_size)
+        oid.write_to_buffer(@struct.enterprise)
+        @struct.enterprise_length = oid.length
       end
 
       # The enterprise OID of this PDU
@@ -87,6 +88,12 @@ module Net
       # (Only valid for SNMPv1 traps)
       def uptime
         @struct.time
+      end
+
+      # The uptime for the PDU
+      # (Only valid for SNMPv1 traps)
+      def uptime=(value)
+        @struct.time = value.to_i
       end
 
       # Returns true if pdu is in error
@@ -193,7 +200,15 @@ module Net
       end
 
       # Free the pdu
+      # Segfaults at the moment - most of the time, anyway.
+      # This is troublesome...
       def free
+        # HACK
+        # snmp_free_pdu segfaults intermittently when freeing the enterprise
+        # oid itself. Can't figure out why. For now, freeing it manually
+        # before calling snmp_free_pdu does the trick
+        FFI::LibC.free @struct.enterprise unless @struct.enterprise == FFI::Pointer::NULL
+        @struct.enterprise = FFI::Pointer::NULL
         Wrapper.snmp_free_pdu(@struct.pointer)
       end
 

@@ -258,6 +258,7 @@ module Wrapper
     end
   end
 
+  attach_function :snmp_clone_pdu, [ :pointer ], :pointer
   attach_function :snmp_open, [ :pointer ], SnmpSession.typed_pointer
   attach_function :snmp_errstring, [:int], :string
   attach_function :snmp_close, [ :pointer ], :int
@@ -438,6 +439,8 @@ module FFI
     # Standard IO functions
     #@blocking = true  # some undocumented voodoo that tells the next attach_function to release the GIL
     attach_function :malloc, [:size_t], :pointer
+    attach_function :calloc, [:size_t, :size_t], :pointer
+    attach_function :memcpy, [:pointer, :pointer, :size_t], :pointer
     attach_function :free, [:pointer], :void
     #attach_variable :errno, :int
 

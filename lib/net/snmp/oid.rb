@@ -46,6 +46,13 @@ module Net
         pointer.send("read_array_of_uint#{@sub_id_bit_width}", sub_id_count).join('.')
       end
 
+      def write_to_buffer(buffer)
+        unless @sub_id_bit_width
+          @sub_id_bit_width = OID.oid_size * 8
+        end
+        buffer.send("write_array_of_uint#{@sub_id_bit_width}", self.to_s.split('.').map{ |subid| subid.to_i })
+      end
+
       def initialize(oid)
         @oid = oid
         @pointer = FFI::MemoryPointer.new(Net::SNMP::OID.oid_size * Constants::MAX_OID_LEN)
@@ -61,7 +68,6 @@ module Net
           end
           @oid = to_s
         end
-
       end
 
       def size

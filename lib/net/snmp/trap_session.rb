@@ -9,25 +9,37 @@ module Net
       def initialize(options = {})
         # Unless the port was supplied in the peername...
         unless options[:peername][":"]
+          # ...default to standard trap port
           options[:port] ||= 162
         end
+
         super(options)
       end
 
       # Send an SNMPv1 trap
-      # +options+
-      # * :enterprise The Oid of the enterprise
-      # * :trap_type  The generic trap type.
-      # * :specific_type The specific trap type
+      #
+      # Options
+      #
+      # - enterprise: The Oid of the enterprise
+      # - trap_type:  The generic trap type.
+      # - specific_type: The specific trap type
+      # - uptime: The uptime for this agent
       def trap(options = {})
         pdu = PDU.new(Constants::SNMP_MSG_TRAP)
-        options[:enterprise] ||= '1.3.6.1.4.1.3.1.1'  # uh, just send netsnmp enterprise i guess
-        pdu.enterprise = OID.new(options[:enterprise])
-        pdu.trap_type = options[:trap_type] || 1  # need to check all these defaults
-        pdu.specific_type = options[:specific_type] || 0
-        pdu.time = 1    # put what here?
+        options[:enterprise] ||= '1.3.6.1.4.1.3.1.1'  # Default =
+        pdu.enterprise = OID.new(options[:enterprise].to_s)
+        pdu.trap_type = options[:trap_type].to_i || 1  # need to check all these defaults
+        pdu.specific_type = options[:specific_type].to_i || 0
+        pdu.time = options[:uptime].to_i || 1
+        pdu.agent_addr = options[:agent_addr]
+        if options[:varbinds]
+          options[:varbinds].each do |vb|
+            pdu.add_varbind(vb)
+          end
+        end
         send_pdu(pdu)
-        true
+        pdu.free
+        nil
       end
 
       # Send an SNMPv2 trap

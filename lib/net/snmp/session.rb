@@ -169,7 +169,6 @@ module Net
         @struct = Wrapper.snmp_sess_open(@sess.pointer)
       end
 
-
       # Close the snmp session and free associated resources.
       def close
         if Net::SNMP.thread_safe
@@ -446,13 +445,11 @@ module Net
           if Wrapper.snmp_sess_async_send(@struct, pdu.pointer, sess_callback, nil) == 0
             error("snmp_get async failed")
           end
-          #pdu.free
           nil
         else
           if defined?(EM) && EM.reactor_running? && defined?(Fiber)
             f = Fiber.current
             send_pdu pdu do | op, response_pdu |
-              #pdu.free
               f.resume([op, response_pdu])
             end
             op, result = Fiber.yield
@@ -477,7 +474,13 @@ module Net
       def send_pdu_blocking(pdu)
         response_ptr = FFI::MemoryPointer.new(:pointer)
         if [Constants::SNMP_MSG_TRAP, Constants::SNMP_MSG_TRAP2, Constants::SNMP_MSG_RESPONSE].include?(pdu.command)
-          status = Wrapper.snmp_sess_send(@struct, pdu.pointer)
+          # Since we don't expect a response, the native net-snmp lib is going to free this
+          # pdu for us. Polite, though this may be, it causes intermittent segfaults when freeing
+          # memory associated with ruby. So, clone the pdu into a new memory buffer,
+          # and pass that along.
+          # TODO: If I can figure out why pdu.free is segfaulting, I may be able to avoid this cloning
+          clone = Wrapper.snmp_clone_pdu(pdu.struct)
+          status = Wrapper.snmp_sess_send(@struct, clone)
           if status == 0
             error("snmp_sess_send")
           end
@@ -541,7 +544,7 @@ module Net
             @requests.delete(reqid)
             callback_return == false ? 0 : 1 #if callback returns false (failure), pass it on.  otherwise return 1 (success)
           else
-            0# Do what here?  Can this happen?  Maybe request timed out and was deleted?
+            0 # Do what here?  Can this happen?  Maybe request timed out and was deleted?
           end
         end
       end

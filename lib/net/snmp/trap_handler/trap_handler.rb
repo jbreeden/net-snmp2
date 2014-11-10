@@ -19,8 +19,6 @@ module Net::SNMP
     private
 
     def process_trap(message, from_address, from_port)
-      self.message = message
-      self.pdu = message.pdu
       if message.pdu.command == Net::SNMP::Constants::SNMP_MSG_TRAP
         V1TrapDsl.new(message).instance_eval(&v1_handler)
       elsif message.pdu.command == Net::SNMP::Constants::SNMP_MSG_TRAP2
