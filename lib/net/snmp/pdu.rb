@@ -209,7 +209,7 @@ module Net
         # oid if we've allocated it. Can't figure out why. For now, freeing it manually
         # before calling snmp_free_pdu does the trick
         if @i_own_enterprise
-          FFI::LibC.free @struct.enterprise unless @struct.enterprise.null?
+          FFI::LibC.free(@struct.enterprise) unless @struct.enterprise.null?
           @struct.enterprise = FFI::Pointer::NULL
         end
         Wrapper.snmp_free_pdu(@struct.pointer)

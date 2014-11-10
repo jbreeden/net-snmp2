@@ -52,7 +52,9 @@ module Net
         end
         pdu = PDU.new(Constants::SNMP_MSG_TRAP2)
         build_trap_pdu(pdu, options)
-        send_pdu(pdu)
+        result = send_pdu(pdu)
+        pdu.free
+        result
       end
 
       # Send an SNMPv2 inform.  Can accept a callback to execute on confirmation of the inform
@@ -65,13 +67,15 @@ module Net
         end
         pdu = PDU.new(Constants::SNMP_MSG_INFORM)
         build_trap_pdu(pdu, options)
-        send_pdu(pdu, &callback)
+        result = send_pdu(pdu, &callback)
+        pdu.free
       end
 
       private
       def build_trap_pdu(pdu, options = {})
-        #pdu.add_varbind(:oid => OID.new('sysUpTime.0'), :type => Constants::ASN_TIMETICKS, :value => 42)
-        #pdu.add_varbind(:oid => OID.new('snmpTrapOID.0'), :type => Constants::ASN_OBJECT_ID, :value => options[:oid])
+        options[:uptime] ||= 1
+        pdu.add_varbind(:oid => OID.new('sysUpTime.0'), :type => Constants::ASN_TIMETICKS, :value => options[:uptime].to_i)
+        pdu.add_varbind(:oid => OID.new('snmpTrapOID.0'), :type => Constants::ASN_OBJECT_ID, :value => options[:oid])
         if options[:varbinds]
           options[:varbinds].each do |vb|
             pdu.add_varbind(vb)

@@ -108,7 +108,7 @@ class Message
     # We do not want to own this pointer, or we can't call `snmp_free_pdu` on it,
     # which happens in PDU#free. Instead, let the native library allocate it.
     # Note that if we allocate any members for this pdu (like the enterprise oid string),
-    # We will have to free those ourselved before calling `snmp_free_pdu`.
+    # We will have to free those ourselves before calling `snmp_free_pdu`.
     #
     # If the above is not done, segfaults start happening when one side tries
     # to free memory malloc'ed by the other side. Possibly because the netsnmp.dll
@@ -118,6 +118,7 @@ class Message
 
     Net::SNMP::Wrapper.snmp_pdu_parse(pdu_struct_ptr, @cursor_ptr, @bytes_remaining_ptr)
     @pdu = Net::SNMP::PDU.new(pdu_struct_ptr.pointer)
+    debug "PDU PARSED\n#{self}"
   end
 
   def to_s

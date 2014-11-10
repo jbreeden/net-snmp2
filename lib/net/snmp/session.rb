@@ -476,9 +476,8 @@ module Net
         if [Constants::SNMP_MSG_TRAP, Constants::SNMP_MSG_TRAP2, Constants::SNMP_MSG_RESPONSE].include?(pdu.command)
           # Since we don't expect a response, the native net-snmp lib is going to free this
           # pdu for us. Polite, though this may be, it causes intermittent segfaults when freeing
-          # memory associated with ruby. So, clone the pdu into a new memory buffer,
+          # memory malloc'ed by ruby. So, clone the pdu into a new memory buffer,
           # and pass that along.
-          # TODO: If I can figure out why pdu.free is segfaulting, I may be able to avoid this cloning
           clone = Wrapper.snmp_clone_pdu(pdu.struct)
           status = Wrapper.snmp_sess_send(@struct, clone)
           if status == 0

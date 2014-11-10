@@ -20,9 +20,11 @@ module Net::SNMP
 
     def process_trap(message, from_address, from_port)
       if message.pdu.command == Net::SNMP::Constants::SNMP_MSG_TRAP
-        V1TrapDsl.new(message).instance_eval(&v1_handler)
+        handler = V1TrapDsl.new(message)
+        handler.instance_eval(&v1_handler)
       elsif message.pdu.command == Net::SNMP::Constants::SNMP_MSG_TRAP2
-        V2TrapDsl.new(message).instance_eval(&v2_handler)
+        handler = V2TrapDsl.new(message)
+        handler.instance_eval(&v2_handler)
       else
         warn "Trap handler receive invalid command: #{message.pdu.command}"
       end
