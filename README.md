@@ -18,6 +18,7 @@ The gem also includes some useful executables including:
 Features
 --------
 
+* Improved Windows support over original net-snmp gem
 * Supports SNMP versions 1, 2c, and 3
 * Supports both synchronous and asynchronous calls
 * Supports sending of snmpv1 traps and snmpv2 traps/informs using TrapSession
