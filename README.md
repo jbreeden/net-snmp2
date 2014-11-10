@@ -27,3 +27,8 @@ Features
 * Convenience methods such as session.walk, session.get_columns, and session.table
 * SNMP Agent support
 * Trap handler support
+
+TODO
+----
+
+Add `inform` support to trap handlers. (Currently supports v1 & v2 traps).
