@@ -31,7 +31,7 @@ module Net
         pdu.trap_type = options[:trap_type].to_i || 1  # need to check all these defaults
         pdu.specific_type = options[:specific_type].to_i || 0
         pdu.time = options[:uptime].to_i || 1
-        pdu.agent_addr = options[:agent_addr]
+        pdu.agent_addr = options[:agent_addr] || '127.0.0.1'
         if options[:varbinds]
           options[:varbinds].each do |vb|
             pdu.add_varbind(vb)
