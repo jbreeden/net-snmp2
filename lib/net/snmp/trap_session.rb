@@ -46,6 +46,10 @@ module Net
       # +options
       # * :oid The Oid of the trap
       # * :varbinds A list of Varbind objects to send with the trap
+      #
+      # TODO: You can only send v1 traps on a v1 session, and same for v2.
+      # So, we could always have the client call `trap` and just do the right
+      # thing based on the session.
       def trap_v2(options = {})
         if options[:oid].kind_of?(String)
           options[:oid] = Net::SNMP::OID.new(options[:oid])
