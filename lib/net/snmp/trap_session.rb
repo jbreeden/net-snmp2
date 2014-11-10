@@ -26,7 +26,7 @@ module Net
       # - uptime: The uptime for this agent
       def trap(options = {})
         pdu = PDU.new(Constants::SNMP_MSG_TRAP)
-        options[:enterprise] ||= '1.3.6.1.4.1.3.1.1'  # Default =
+        options[:enterprise] ||= '1.3.6.1.4.1.3.1.1'
         pdu.enterprise = OID.new(options[:enterprise].to_s)
         pdu.trap_type = options[:trap_type].to_i || 1  # need to check all these defaults
         pdu.specific_type = options[:specific_type].to_i || 0
@@ -73,6 +73,7 @@ module Net
         build_trap_pdu(pdu, options)
         result = send_pdu(pdu, &callback)
         pdu.free
+        result
       end
 
       private
