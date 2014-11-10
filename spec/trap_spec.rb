@@ -5,10 +5,9 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe Net::SNMP::TrapSession do
   it "should send a v1 trap" do
-    #pending "still working on it"
     Net::SNMP::TrapSession.open(:peername => 'localhost', :version => '1', :community => 'public') do |sess|
       res = sess.trap
-      res.should eq(true)
+      res.should eq(:success)
     end
   end
 

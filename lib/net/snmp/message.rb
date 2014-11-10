@@ -100,10 +100,24 @@ class Message
   end
 
   def parse_pdu
-    pdu_struct_ptr = Net::SNMP::Wrapper::SnmpPdu.new
+    ###########################################
+    # Don't do this...
+    #
+    #    pdu_struct_ptr = Wrapper::SnmpPdu.new
+    #
+    # We do not want to own this pointer, or we can't call `snmp_free_pdu` on it,
+    # which happens in PDU#free. Instead, let the native library allocate it.
+    # Note that if we allocate any members for this pdu (like the enterprise oid string),
+    # We will have to free those ourselved before calling `snmp_free_pdu`.
+    #
+    # If the above is not done, segfaults start happening when one side tries
+    # to free memory malloc'ed by the other side. Possibly because the netsnmp.dll
+    # links to a different C Runtime library, which may have differences in malloc/free.
+    pdu_struct_ptr = Wrapper.snmp_pdu_create(0)
+    ###########################################
+
     Net::SNMP::Wrapper.snmp_pdu_parse(pdu_struct_ptr, @cursor_ptr, @bytes_remaining_ptr)
     @pdu = Net::SNMP::PDU.new(pdu_struct_ptr.pointer)
-    debug "COMMUNITY PARSED\n#{self}"
   end
 
   def to_s

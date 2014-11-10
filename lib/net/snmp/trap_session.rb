@@ -37,9 +37,9 @@ module Net
             pdu.add_varbind(vb)
           end
         end
-        send_pdu(pdu)
+        result = send_pdu(pdu)
         pdu.free
-        nil
+        result
       end
 
       # Send an SNMPv2 trap

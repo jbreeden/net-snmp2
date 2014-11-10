@@ -484,15 +484,12 @@ module Net
           if status == 0
             error("snmp_sess_send")
           end
+          :success
         else
           status = Wrapper.snmp_sess_synch_response(@struct, pdu.pointer, response_ptr)
           unless status == Constants::STAT_SUCCESS
             error("snmp_sess_synch_response", :status => status)
           end
-        end
-        if [Constants::SNMP_MSG_TRAP, Constants::SNMP_MSG_TRAP2, Constants::SNMP_MSG_RESPONSE].include?(pdu.command)
-          1
-        else
           PDU.new(response_ptr.read_pointer)
         end
       end

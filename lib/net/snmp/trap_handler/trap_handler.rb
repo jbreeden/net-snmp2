@@ -26,6 +26,7 @@ module Net::SNMP
       else
         warn "Trap handler receive invalid command: #{message.pdu.command}"
       end
+      message.pdu.free
     end
 
     def v1(&handler)

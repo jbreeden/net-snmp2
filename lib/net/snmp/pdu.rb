@@ -55,6 +55,7 @@ module Net
       # Sets the enterprise OID of this PDU
       # (Valid for SNMPv1 traps only)
       def enterprise=(oid)
+        @i_own_enterprise = true
         oid = OID.new(oid) if oid.kind_of?(String)
         @struct.enterprise = FFI::LibC.calloc(oid.length, OID.oid_size)
         oid.write_to_buffer(@struct.enterprise)
@@ -205,10 +206,12 @@ module Net
       def free
         # HACK
         # snmp_free_pdu segfaults intermittently when freeing the enterprise
-        # oid itself. Can't figure out why. For now, freeing it manually
+        # oid if we've allocated it. Can't figure out why. For now, freeing it manually
         # before calling snmp_free_pdu does the trick
-        FFI::LibC.free @struct.enterprise unless @struct.enterprise == FFI::Pointer::NULL
-        @struct.enterprise = FFI::Pointer::NULL
+        if @i_own_enterprise
+          FFI::LibC.free @struct.enterprise unless @struct.enterprise.null?
+          @struct.enterprise = FFI::Pointer::NULL
+        end
         Wrapper.snmp_free_pdu(@struct.pointer)
       end
 
