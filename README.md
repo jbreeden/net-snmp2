@@ -32,4 +32,8 @@ Features
 TODO
 ----
 
-Add `inform` support to trap handlers. (Currently supports v1 & v2 traps).
+- Add `inform` support to trap handlers. (Currently supports v1 & v2 traps).
+- Fix rdocs. Original gem was using a different comment format... I've opted for markdown. The generated rdocs are probably garbage.
+  + The [wiki](https://github.com/jbreeden/net-snmp2/wiki) has the best documentation for now.
+  + All the specs are passing, so that's another good place to go for information.
+  + There is also the built-in net-snmp2 program you can run. This is an interactive Pry shell that is very useful for digging around the code and getting a feel for how to do things.
