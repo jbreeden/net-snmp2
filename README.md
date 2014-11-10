@@ -26,3 +26,4 @@ Features
 * MIB support
 * Convenience methods such as session.walk, session.get_columns, and session.table
 * SNMP Agent support
+* Trap handler support
