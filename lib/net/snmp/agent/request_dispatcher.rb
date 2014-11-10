@@ -10,14 +10,23 @@ module Net::SNMP
       context = ProviderDsl.new
       context.message = message
       context.response_pdu = response_pdu
-      message.pdu.varbinds.each do |vb|
+      message.pdu.varbinds.each_with_index do |vb, index|
         context.varbind = vb
         provider = providers.find { |p| p.oid == :all || vb.oid.to_s.start_with?(p.oid.to_s) }
-        handler = provider.handler_for(message) if provider
-        if handler
-          context.instance_exec(&handler)
+        if provider
+          if message.pdu.command == Constants::SNMP_MSG_GETBULK && index < message.pdu.non_repeaters
+            handler = provider.handler_for(Constants::SNMP_MSG_GETNEXT)
+          else
+            handler = provider.handler_for(message)
+          end
+          if handler
+            context.instance_exec(&handler)
+          else
+            Debug.warn "No handler for command: #{message.pdu.command} @ #{vb.oid}"
+            context.no_such_object
+          end
         else
-          Debug.warn "No handler for command: #{message.pdu.command} @ #{vb.oid}"
+          Debug.warn "No provider for oid: #{vb.oid}"
           context.no_such_object
         end
       end

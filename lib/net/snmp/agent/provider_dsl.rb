@@ -48,6 +48,11 @@ module Net::SNMP
       varbind.value
     end
 
+    # The maximum number of repetitions for each bulk retrieved varbind
+    def max_repetitions
+      pdu.max_repetitions
+    end
+
     # Setters
     # -------
 

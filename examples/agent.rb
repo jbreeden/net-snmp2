@@ -81,6 +81,22 @@ agent.provide '1.3' do
     end
   end
 
+  # Note that the `get_next` handler is also used for varbinds
+  # 1..non_repeaters from the request pdu of a get_bulk
+  get_next do
+    puts "get_next called for #{oid_str}"
+    reply(oid: oid_str + '.0', value: 'get_next value')
+  end
+
+  # `get_bulk` handler serves all varbinds in a get_bulk request
+  # after the non_repeaters have been served by `get_next`
+  get_bulk do
+    puts "get_bulk called for #{oid_str}"
+    (0..max_repetitions).each do |i|
+      add(oid: "#{oid_str}.#{i}", value: "Bulk value ##{i}")
+    end
+  end
+
 end
 
 # Start the agent's run loop, listening to port 161

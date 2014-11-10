@@ -27,7 +27,6 @@ describe "Net::SNMP::Wrapper" do
   end
 
   it "wrapper should snmpget synchronously" do
-    #pending
     init_session
 
     make_pdu
@@ -42,7 +41,6 @@ describe "Net::SNMP::Wrapper" do
   end
 
   it "wrapper should snmpget asynchronously" do
-      #pending
       init_session
       make_pdu
       did_callback = 0
