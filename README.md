@@ -1,7 +1,9 @@
 net-snmp2
 =========
 
-(Checkout the [wiki](https://github.com/jbreeden/net-snmp2/wiki))
+[![Gem Version](https://badge.fury.io/rb/net-snmp2.svg)](http://badge.fury.io/rb/net-snmp2)
+
+Just getting started? Checkout the [wiki](https://github.com/jbreeden/net-snmp2/wiki)
 
 An object oriented Ruby wrapper around the C [netsnmp](http://www.net-snmp.org) libraries.
 It provides classes for manager sessions, agents, pdus, varbinds, MIB inspection, and more.
