@@ -3,12 +3,8 @@ module Net::SNMP
     include Net::SNMP::Debug
     extend Forwardable
 
-    attr_accessor :listener, :v1_handler, :v2_handler, :message, :pdu
+    attr_accessor :listener, :v1_handler, :v2_handler, :inform_handler, :message, :pdu
     def_delegators :listener, :start, :run, :listen, :stop, :kill
-
-    def self.listen(port = 162, interval = 2, max_packet_size = 65_000, &block)
-      self.new
-    end
 
     def initialize(&block)
       @listener = Net::SNMP::Listener.new
@@ -18,15 +14,19 @@ module Net::SNMP
 
     private
 
-    def process_trap(message, from_address, from_port)
-      if message.pdu.command == Net::SNMP::Constants::SNMP_MSG_TRAP
+    def process_trap(message)
+      case message.pdu.command
+      when Constants::SNMP_MSG_TRAP
         handler = V1TrapDsl.new(message)
         handler.instance_eval(&v1_handler)
-      elsif message.pdu.command == Net::SNMP::Constants::SNMP_MSG_TRAP2
+      when Constants::SNMP_MSG_TRAP2
         handler = V2TrapDsl.new(message)
         handler.instance_eval(&v2_handler)
+      when Constants::SNMP_MSG_INFORM
+        handler = V2InformDsl.new(message)
+        handler.instance_eval(&inform_handler)
       else
-        warn "Trap handler receive invalid command: #{message.pdu.command}"
+        warn "Trap handler received non-trap PDU. Command type was: #{message.pdu.command}"
       end
       message.pdu.free
     end
@@ -37,6 +37,10 @@ module Net::SNMP
 
     def v2(&handler)
       @v2_handler = handler
+    end
+
+    def inform(&handler)
+      @inform_handler = handler
     end
   end
 end

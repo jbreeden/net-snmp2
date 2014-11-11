@@ -35,6 +35,21 @@ handler = Net::SNMP::TrapHandler.new do
     Varbinds: #{varbinds.map {|vb| "#{vb.oid.label}(#{vb.oid}) = #{vb.value}"}.join(', ')}
     EOF
   end
+
+  inform do
+    info <<-EOF
+
+
+    Got Inform
+    ----------
+
+    Trap OID: #{trap_oid}
+    Uptime: #{uptime}
+    Varbinds: #{varbinds.map {|vb| "#{vb.oid.label}(#{vb.oid}) = #{vb.value}"}.join(', ')}
+    EOF
+
+    ok
+  end
 end
 
 # If the program gets the interrupt signal, tell the trap handler

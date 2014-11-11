@@ -1,10 +1,22 @@
 $: << '../lib'
+
+require 'logger'
+
+module Net
+  module SNMP
+    module Debug
+      @logger = Logger.new(STDOUT)
+      @logger.level = Logger::DEBUG
+    end
+  end
+end
+
 require 'net-snmp2'
 
 # Initialize SNMP and give it a logger
 Net::SNMP.init
-Net::SNMP::Debug.logger = Logger.new(STDOUT)
-Net::SNMP::Debug.logger.level = Logger::INFO
+# Net::SNMP::Debug.logger = Logger.new(STDOUT)
+# Net::SNMP::Debug.logger.level = Logger::DEBUG
 
 agent = Net::SNMP::Agent.new
 
@@ -19,13 +31,6 @@ mib = {
   '1.3.1.1' => 1,
   '1.3.1.2' => "I'm a string"
 }
-
-# Setting up a provider with a MIB variable name
-agent.provide 'sysContact' do
-  get do
-    reply "Jared Breeden"
-  end
-end
 
 # The `provide` function creates a provider the Agent can
 # delegate to when a request has a varbind that lives under
@@ -104,14 +109,6 @@ agent.provide '1.3' do
     end
   end
 
-end
-
-# Setting up a second provider
-# Note: All the OIDs in this example are meaningless.
-agent.provide '1.4.1' do
-  get do
-    reply "Get value from second provider"
-  end
 end
 
 # Start the agent's run loop, listening to port 161

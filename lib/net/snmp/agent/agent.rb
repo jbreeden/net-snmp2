@@ -41,18 +41,14 @@ module Net::SNMP
 
     # The callback given to the Listener object for handling an SNMP message.
     # Calls `dispatch`, then sends the response PDU, if one is returned.
-    def process_message(message, from_address, from_port)
-      response_pdu = dispatch(message)
-      if response_pdu
-        Session.open(peername: from_address, port: from_port, version: message.version_name) do |sess|
-          sess.send_pdu response_pdu
-        end
-      end
+    def process_message(message)
+      # TODO: May want to ignore some messages (say, if the community string is wrong)
+      message.respond(dispatch(message))
     end
 
     # Collects responses for the given message from the available providers
     def dispatch(message)
-      response_pdu = Message::response_pdu_for(message)
+      response_pdu = message.make_response_pdu
       context = ProviderDsl.new
       context.message = message
       context.response_pdu = response_pdu
