@@ -36,6 +36,7 @@ TODO
 ----
 
 - Add `inform` support to trap handlers. (Currently supports v1 & v2 traps).
+- TrapHandler & Agent support doesn't work on default Windows build of net-snmp libraries, due to certain functions not being exported in the dll. This can be fixed by adding "NETSNMP_IMPORT" before the functions that are missing it in the snmp_api.h file and compiling net-snmp again. This is actually rather painless, as net-snmp has a nice build.bat file in the win32 folder that does everything for you. Still, this should be fixed.
 - Fix rdocs. Original gem was using a different comment format... I've opted for markdown. The generated rdocs are probably garbage.
   + The [wiki](https://github.com/jbreeden/net-snmp2/wiki) has the best documentation for now.
   + All the specs are passing, so that's another good place to go for information.
