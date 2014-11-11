@@ -29,7 +29,6 @@ require 'logger'
   snmp/agent/agent
   snmp/agent/provider
   snmp/agent/provider_dsl
-  snmp/agent/request_dispatcher
   snmp/message
 ).each do |f|
   require "#{File.dirname(__FILE__)}/net/#{f}"

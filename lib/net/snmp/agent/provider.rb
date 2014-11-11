@@ -5,6 +5,39 @@ module Net::SNMP
 # of the subtree provided, and handlers for the various request types.
 # The handlers are executed for each varbind of the incoming message
 # individually in the context of a ProviderDsl object.
+#
+# Clients do not create Providers directly. Instead, they call `provide` on
+# an Agent, passing in a block. Within the block they use the `get`, `get_next`,
+# `get_bulk`, and `set` methods to configure handlers for these request types.
+# Within these handlers, the DSL methods from the ProviderDsl class can be
+# used to inspect the current request.
+#
+# Example
+#
+#     require 'net-snmp2'
+#     agent = Net::SNMP::Agent.new
+#     agent.provide :all do
+#
+#       get do
+#         reply get_value_somehow(oid)
+#       end
+#
+#       set do
+#         reply set_value_somehow(oid)
+#       end
+#
+#       get_next do
+#         reply get_next_value_somehow(oid)
+#       end
+#
+#       get_bulk do
+#         (0..max_repetitions).each do |i|
+#           add get_bulk_vlue_somehow(oid, i)
+#         end
+#       end
+#
+#     end
+#     agent.listen(161)
 
   class Provider
     attr_accessor :oid,
@@ -13,10 +46,24 @@ module Net::SNMP
       :get_next_handler,
       :get_bulk_handler
 
+    # Creates a new Provider with `oid` as the root of its subtree
     def initialize(oid)
+      if oid.kind_of?(Symbol)
+        raise "Cannot provide symbol '#{oid}'. (Did you mean to use :all?)"
+      else
+        # Guarantee OID is in numeric form
+        oid = OID.new(oid).to_s
+      end
       @oid = oid
     end
 
+    # Gets the handler for the given command type from this provider.
+    #
+    # Arguments
+    #
+    # - command
+    #   + As an integer, specifies the command type a handler is needed for.
+    #   + May also be a Message or PDU object, from which the command type is read.
     def handler_for(command)
       # User might be tempted to just pass in the message, or pdu,
       # if so, just pluck the command off of it.
@@ -38,6 +85,12 @@ module Net::SNMP
       else
         raise "Invalid command type: #{command}"
       end
+    end
+
+    # Returns a boolean indicating whether this provider provides
+    # the given `oid`
+    def provides?(oid)
+      self.oid == :all || oid.to_s =~ %r[#{self.oid.to_s}(\.|$)]
     end
 
     [:get, :set, :get_next, :get_bulk].each do |request_type|

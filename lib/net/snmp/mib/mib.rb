@@ -35,7 +35,8 @@ module Net
           "#{node.label}#{oid.sub(node.oid.to_s, "")}"
         else
           # Node OID + instance indexes from argument
-          "#{node.oid.to_s}#{oid.sub(node.label.to_s, "")}"
+          # (Regex ensures the module qualifier is also removed, if present)
+          "#{node.oid.to_s}#{oid.sub(%r[.*#{node.label.to_s}], "")}"
         end
       end
 

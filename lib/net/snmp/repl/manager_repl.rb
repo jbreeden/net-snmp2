@@ -28,11 +28,13 @@ EOF
     end
 
     # Adds a session for managing options[:peername] to the sessions list.
+    #
     # - Note that all requests are sent to all active sessions, and their
     #   responses are all displayed under their peername.
     # - You may close a session by calling `close(peername)`
     #
     # Arguments
+    #
     # - options: A Hash or String object
     #   + As a Hash, accepts the following keys
     #     - peername: ADDRESS_OF_AGENT
@@ -40,11 +42,12 @@ EOF
     #     - version:  '1'|'2c'|'3' (defaults to '2c')
     #   + As a string, implies the peername, with the version defaulting to '2c'
     #
-    # Examples:
-    #  manage('192.168.1.5')
-    #  manage('192.168.1.5:162')
-    #  manage(peername: '192.168.1.5', port: 161, version '2c')
-    #  manage(peername: '192.168.1.5:161', version '2c')
+    # Examples
+    #
+    #   manage('192.168.1.5')
+    #   manage('192.168.1.5:162')
+    #   manage(peername: '192.168.1.5', port: 161, version '2c')
+    #   manage(peername: '192.168.1.5:161', version '2c')
     def manage(options)
       options = {:peername => options} if options.kind_of?(String)
       sessions << Session.open(options)
@@ -54,11 +57,13 @@ EOF
     # Close the session with the given `peername`
     #
     # Arguments
+    #
     # - peername: May be a string, matching the peername, or an index.
     #   Run the `peer` command to see indexes & peernames for
     #   all active sessions
     #
-    # Example:
+    # Example
+    #
     #   [7] net-snmp2> peers
     #
     #   Currently Managing
@@ -117,6 +122,7 @@ EOF
     # Translates a numerical oid to it's MIB name, or a name to numerical oid
     #
     # Arguments
+    #
     # - oid: Either a string, as the numerical OID or MIB variable name,
     #        or an OID object
     def translate(oid)
@@ -126,6 +132,7 @@ EOF
     # Prints a description of a MIB variable
     #
     # Arguments
+    #
     # - oid: May be either a numeric OID, or MIB variable name
     def describe(oid)
       nodes = [MIB[oid]]
@@ -135,6 +142,7 @@ EOF
     # Prints a description of a the MIB subtree starting at root `oid`
     #
     # Arguments
+    #
     # - oid: May be either a numeric OID, or MIB variable name
     def describe_tree(oid)
       root = MIB[oid]
@@ -145,6 +153,7 @@ EOF
     # Issue an SNMP GET Request to all active peers
     #
     # Arguments
+    #
     # - oids: A single oid, or an array of oids
     def get(oids, options = {})
       each_session do |session|
@@ -158,6 +167,7 @@ EOF
     # Issue an SNMP GETNEXT Request to all active peers
     #
     # Arguments
+    #
     # - oids: A single oid, or an array of oids
     def get_next(oids, options = {})
       each_session do |session|
@@ -171,6 +181,7 @@ EOF
     # Issue an SNMP GETBULK Request to all active peers
     #
     # Arguments
+    #
     # - oids: A single oid, or an array of oids
     # - options: A Hash accepting the typical options keys for a request, plus
     #  + non_repeaters: The number of non-repeated oids in the request
@@ -188,6 +199,7 @@ EOF
     # Performs a walk on all active peers for each oid provided
     #
     # Arguments
+    #
     # - oids: A single oid, or an array of oids
     def walk(oids, options = {})
       each_session do |session|
@@ -201,10 +213,11 @@ EOF
     # Issue an SNMP Set Request to all active peers
     #
     # Arguments
+    #
     # - varbinds: An single varbind, or an array of varbinds, each of which may be
     #   + An Array of length 3 `[oid, type, value]`
     #   + An Array of length 2 `[oid, value]`
-    #   + Or a Hash `{oid: oid, type: type, value: value}`
+    #   + A Hash `{oid: oid, type: type, value: value}`
     #     * Hash syntax is the same as supported by PDU.add_varbind
     #     * If type is not supplied, it is infered by the value
     def set(varbinds, options = {})

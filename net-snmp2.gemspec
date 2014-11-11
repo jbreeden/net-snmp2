@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
   # Documentation options
   s.has_rdoc = true
   s.extra_rdoc_files = %w{ README.md }
-  s.rdoc_options = ["--main=README.md", "--line-numbers", "--inline-source", "--title=#{s.name}-#{s.version} Documentation"]
+  s.rdoc_options = ["--main=README.md", "--markup=markdown", "--line-numbers", "--inline-source", "--title=#{s.name}-#{s.version} Documentation"]
 
   s.add_dependency 'nice-ffi'
   s.add_dependency 'pry'

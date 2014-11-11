@@ -5,7 +5,7 @@ module Net::SNMP
     class Node
       include Debug
       extend Forwardable
-      attr_accessor :struct, :is_in_mib
+      attr_accessor :struct
       def_delegators :struct, :label, :type, :access, :status, :modid, :subid
 
       class << self

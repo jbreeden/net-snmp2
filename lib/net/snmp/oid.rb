@@ -26,7 +26,9 @@ module Net
           length_ptr.write_int(oid_ptr.total)
 
           Wrapper.read_objid('1.1', oid_ptr, length_ptr)
-          oid_str = oid_ptr.read_array_of_uint8(oid_ptr.total).map{|byte| byte.to_s(2).rjust(8, '0') }.join('')
+          oid_str = oid_ptr.read_array_of_uint8(oid_ptr.total).map { |byte|
+            byte.to_s(2).rjust(8, '0')
+          }.join('')
 
           @oid_size = (oid_str[/10*1/].length - 1) / 8
         else
@@ -50,7 +52,8 @@ module Net
         unless @sub_id_bit_width
           @sub_id_bit_width = OID.oid_size * 8
         end
-        buffer.send("write_array_of_uint#{@sub_id_bit_width}", self.to_s.split('.').map{ |subid| subid.to_i })
+        subids = self.to_s.split('.').map{ |subid| subid.to_i }
+        buffer.send("write_array_of_uint#{@sub_id_bit_width}", subids)
       end
 
       def initialize(oid)

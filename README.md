@@ -9,6 +9,7 @@ An object oriented Ruby wrapper around the C [netsnmp](http://www.net-snmp.org) 
 It provides classes for manager sessions, agents, pdus, varbinds, MIB inspection, and more.
 
 The gem also includes some useful executables including:
+
 - **net-snmp2**
   + An interactive REPL for inspecting the MIB, and acting as an SNMP manager.
   + Supports managing multiple agents at once.
