@@ -282,7 +282,7 @@ module Wrapper
   attach_function :snmp_oidsubtree_compare, [ :pointer, :uint, :pointer, :uint ], :int
   attach_function :netsnmp_oid_compare_ll, [ :pointer, :uint, :pointer, :uint, :pointer ], :int
   attach_function :netsnmp_oid_equals, [ :pointer, :uint, :pointer, :uint ], :int
-  attach_function :netsnmp_oid_tree_equals, [ :pointer, :uint, :pointer, :uint ], :int
+  attach_function :netsnmp_oid_tree_equals, [ :pointer, :size_t, :pointer, :size_t ], :int
   attach_function :netsnmp_oid_is_subtree, [ :pointer, :uint, :pointer, :uint ], :int
   attach_function :netsnmp_oid_find_prefix, [ :pointer, :uint, :pointer, :uint ], :int
   attach_function :netsnmp_transport_open_client, [:string, :pointer], :pointer
@@ -290,7 +290,7 @@ module Wrapper
   attach_function :snmp_pdu_build, [ :pointer, :pointer, :pointer ], :pointer
   attach_function :snmpv3_parse, [ :pointer, :pointer, :pointer, :pointer, :pointer ], :int
   attach_function :snmpv3_packet_build, [ :pointer, :pointer, :pointer, :pointer, :pointer, :uint ], :int
-  attach_function :snmpv3_packet_rbuild, [ :pointer, :pointer, :pointer, :pointer, :pointer, :uint ], :int
+  attach_function :snmpv3_packet_rbuild, [ :pointer, :pointer, :pointer, :pointer, :pointer, :size_t ], :int
   attach_function :snmpv3_make_report, [ :pointer, :int ], :int
   attach_function :snmpv3_get_report_type, [ :pointer ], :int
   attach_function :snmp_pdu_parse, [ :pointer, :pointer, :pointer ], :int
@@ -306,7 +306,6 @@ module Wrapper
   attach_function :snmp_get_statistic, [ :int ], :u_int
   attach_function :snmp_init_statistics, [  ], :void
   attach_function :create_user_from_session, [ :pointer ], :int
-  attach_function :snmp_get_fd_for_session, [ :pointer ], :int
   attach_function :snmp_open_ex, [ :pointer, callback([ :pointer, :pointer, :pointer, :int ], :int), callback([ :pointer, :pointer, :pointer, :uint ], :int), callback([ :pointer, :pointer, :int ], :int), callback([ :pointer, :pointer, :pointer, :pointer ], :int), callback([ :pointer, :pointer, :pointer, :pointer, :pointer ], :int), callback([ :pointer, :uint ], :int) ], :pointer
   attach_function :snmp_set_do_debugging, [ :int ], :void
   attach_function :snmp_get_do_debugging, [  ], :int
@@ -388,11 +387,6 @@ module Wrapper
 
   # struct module  *find_module(int modid);
   attach_function :find_module, [:int], Module.typed_pointer
-
-  # Trap functions
-  attach_function :send_easy_trap, [:int, :int], :void
-  attach_function :send_trap_vars, [:int, :int, :pointer], :void
-  attach_function :send_v2trap, [:pointer], :void
 
   def self.get_fd_set
     FFI::MemoryPointer.new(:pointer, 128)

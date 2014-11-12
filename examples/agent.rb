@@ -1,4 +1,5 @@
 $: << '../lib'
+
 require 'net-snmp2'
 
 # Initialize SNMP and give it a logger
