@@ -164,8 +164,7 @@ module Net
             end
           end
         end
-        # General callback just takes the pdu, calls the session callback if any, then the request specific callback.
-
+        
         @struct = Wrapper.snmp_sess_open(@sess.pointer)
       end
 

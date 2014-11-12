@@ -204,10 +204,9 @@ module Net
       # Segfaults at the moment - most of the time, anyway.
       # This is troublesome...
       def free
-        # HACK
         # snmp_free_pdu segfaults intermittently when freeing the enterprise
-        # oid if we've allocated it. Can't figure out why. For now, freeing it manually
-        # before calling snmp_free_pdu does the trick
+        # oid if we've allocated it. So, freeing it manually
+        # before calling snmp_free_pdu.
         if @i_own_enterprise
           FFI::LibC.free(@struct.enterprise) unless @struct.enterprise.null?
           @struct.enterprise = FFI::Pointer::NULL

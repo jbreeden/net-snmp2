@@ -9,7 +9,7 @@ module Net::SNMP
     end
 
     def ok
-      self.response = Message.response_pdu_for(message)
+      message.echo
     end
 
   end

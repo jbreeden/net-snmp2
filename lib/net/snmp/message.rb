@@ -49,10 +49,20 @@ class Message
   # Sends the given PDU back to the origin of this message.
   # The origin is the same address and port that the message was
   # received from.
-  def respond(pdu)
+  def respond(response_pdu)
     Session.open(peername: source_address, port: source_port, version: version_name) do |sess|
-      sess.send_pdu(pdu)
+      sess.send_pdu(response_pdu)
     end
+  end
+
+  # Sends a response PDU to the source of the message with all of the same
+  # varbinds. (Useful for sets & informs, where this is how you indicate success)
+  def echo
+    response_pdu = make_response_pdu
+    pdu.varbinds.each do |vb|
+      response_pdu.add_varbind(oid: vb.oid, type: vb.type, value: vb.value)
+    end
+    respond(response_pdu)
   end
 
   # Constructs a PDU for responding to this message.

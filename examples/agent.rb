@@ -1,22 +1,11 @@
 $: << '../lib'
 
-require 'logger'
-
-module Net
-  module SNMP
-    module Debug
-      @logger = Logger.new(STDOUT)
-      @logger.level = Logger::DEBUG
-    end
-  end
-end
-
 require 'net-snmp2'
 
 # Initialize SNMP and give it a logger
 Net::SNMP.init
-# Net::SNMP::Debug.logger = Logger.new(STDOUT)
-# Net::SNMP::Debug.logger.level = Logger::DEBUG
+Net::SNMP::Debug.logger = Logger.new(STDOUT)
+Net::SNMP::Debug.logger.level = Logger::INFO
 
 agent = Net::SNMP::Agent.new
 

@@ -6,10 +6,7 @@ Net::SNMP.init
 Net::SNMP::Debug.logger = Logger.new(STDOUT)
 Net::SNMP::Debug.logger.level = Logger::DEBUG
 
-puts "Opening session"
 session = Net::SNMP::TrapSession.open(:peername => 'localhost', :version => '1', :community => 'public')
-
-puts "Sending trap"
 
 100000.times do |i|
   session.trap(
@@ -20,5 +17,3 @@ puts "Sending trap"
     agent_addr: '127.0.0.1'
   )
 end
-
-sleep 20

@@ -21,6 +21,7 @@ require 'logger'
   snmp/trap_handler/trap_handler
   snmp/trap_handler/v1_trap_dsl
   snmp/trap_handler/v2_trap_dsl
+  snmp/trap_handler/v2_inform_dsl
   snmp/mib/mib
   snmp/mib/node
   snmp/mib/module
