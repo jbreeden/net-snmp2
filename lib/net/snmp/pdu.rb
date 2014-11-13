@@ -57,7 +57,9 @@ module Net
       def enterprise=(oid)
         @i_own_enterprise = true
         oid = OID.new(oid) if oid.kind_of?(String)
-        @struct.enterprise = FFI::LibC.calloc(oid.length, OID.oid_size)
+        # save own reference to enterprise in case we need to free it
+        @enterprise_ptr = FFI::LibC.calloc(oid.length, OID.oid_size)
+        @struct.enterprise = @enterprise_ptr
         oid.write_to_buffer(@struct.enterprise)
         @struct.enterprise_length = oid.length
       end
@@ -201,17 +203,20 @@ module Net
       end
 
       # Free the pdu
-      # Segfaults at the moment - most of the time, anyway.
-      # This is troublesome...
       def free
-        # snmp_free_pdu segfaults intermittently when freeing the enterprise
-        # oid if we've allocated it. So, freeing it manually
-        # before calling snmp_free_pdu.
+        free_own_memory
+        Wrapper.snmp_free_pdu(@struct.pointer) unless @struct.pointer.null?
+      end
+
+      # malloc'ing memory on one side of the FFI barrier and freeing it
+      # on the other side is unreliable (causing intermittent segfaults).
+      # So, this function free's any memory allocated on the ruby side
+      # for this PDU.
+      def free_own_memory
         if @i_own_enterprise
-          FFI::LibC.free(@struct.enterprise) unless @struct.enterprise.null?
+          FFI::LibC.free(@enterprise_ptr) unless @enterprise_ptr.null?
           @struct.enterprise = FFI::Pointer::NULL
         end
-        Wrapper.snmp_free_pdu(@struct.pointer)
       end
 
       def print

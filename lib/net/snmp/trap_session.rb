@@ -3,9 +3,10 @@ module Net
     class TrapSession < Session
       # == Represents a session for sending SNMP traps
 
-      # +options+
-      # * :peername The address where the trap will be sent
-      # * :port     The port where the trap will be sent (default = 162)
+      # Options
+      #
+      # - peername: The address where the trap will be sent
+      # - port:     The port where the trap will be sent (default = 162)
       def initialize(options = {})
         # Unless the port was supplied in the peername...
         unless options[:peername][":"]
@@ -20,11 +21,62 @@ module Net
       #
       # Options
       #
-      # - enterprise: The Oid of the enterprise
-      # - trap_type:  The generic trap type.
+      # - enterprise:    The Oid of the enterprise
+      # - trap_type:     The generic trap type.
       # - specific_type: The specific trap type
-      # - uptime: The uptime for this agent
+      # - uptime:        The uptime for this agent
       def trap(options = {})
+        pdu = build_v1_trap_pdu(options)
+        send_pdu(pdu)
+      end
+
+      # Send an SNMPv2 trap
+      #
+      # Options
+      #
+      # - oid:    The OID of the inform
+      # - uptime: Integer indicating the uptime of this agent
+      #
+      # TODO: You can only send v1 traps on a v1 session, and same for v2.
+      # So, we could always have the client call `trap` and just do the right
+      # thing based on the session.
+      def trap_v2(options = {})
+        pdu = build_v2_trap_pdu(Constants::SNMP_MSG_TRAP2, options)
+        send_pdu(pdu)
+      end
+
+      # Send an SNMPv2 inform
+      #
+      # Options
+      #
+      # - oid:      The OID of the inform
+      # - uptime:   Integer indicating the uptime of this agent
+      # - varbinds: An array of hashes, like those used for PDU#add_varbind
+      def inform(options = {})
+        pdu = build_v2_trap_pdu(Constants::SNMP_MSG_INFORM, options)
+        response = send_pdu(pdu)
+        if response.kind_of?(PDU)
+          response.free # Always free the response PDU
+          :success # If Session#send_pdu didn't raise, we succeeded
+        else
+          # If the result was other than a PDU, that's a problem
+          raise "Unexpected response type for inform: #{response.class}"
+        end
+      end
+
+      private
+
+      def send_pdu(pdu)
+        result = super(pdu)
+        if pdu.command == Constants::SNMP_MSG_INFORM
+          pdu.free_own_memory
+        else
+          pdu.free
+        end
+        result
+      end
+
+      def build_v1_trap_pdu(options = {})
         pdu = PDU.new(Constants::SNMP_MSG_TRAP)
         options[:enterprise] ||= '1.3.6.1.4.1.3.1.1'
         pdu.enterprise = OID.new(options[:enterprise].to_s)
@@ -37,48 +89,16 @@ module Net
             pdu.add_varbind(vb)
           end
         end
-        result = send_pdu(pdu)
-        pdu.free
-        result
+        pdu
       end
 
-      # Send an SNMPv2 trap
-      # +options
-      # * :oid The Oid of the trap
-      # * :varbinds A list of Varbind objects to send with the trap
-      #
-      # TODO: You can only send v1 traps on a v1 session, and same for v2.
-      # So, we could always have the client call `trap` and just do the right
-      # thing based on the session.
-      def trap_v2(options = {})
+      def build_v2_trap_pdu(pdu_type, options = {})
         if options[:oid].kind_of?(String)
           options[:oid] = Net::SNMP::OID.new(options[:oid])
         end
-        pdu = PDU.new(Constants::SNMP_MSG_TRAP2)
-        build_trap_pdu(pdu, options)
-        result = send_pdu(pdu)
-        pdu.free
-        result
-      end
-
-      # Send an SNMPv2 inform.  Can accept a callback to execute on confirmation of the inform
-      # +options
-      # * :oid The OID of the inform
-      # * :varbinds A list of Varbind objects to send with the inform
-      def inform(options = {}, &callback)
-        if options[:oid].kind_of?(String)
-          options[:oid] = Net::SNMP::OID.new(options[:oid])
-        end
-        pdu = PDU.new(Constants::SNMP_MSG_INFORM)
-        build_trap_pdu(pdu, options)
-        result = send_pdu(pdu, &callback)
-        pdu.free
-        result
-      end
-
-      private
-      def build_trap_pdu(pdu, options = {})
         options[:uptime] ||= 1
+
+        pdu = PDU.new(pdu_type)
         pdu.add_varbind(:oid => OID.new('sysUpTime.0'), :type => Constants::ASN_TIMETICKS, :value => options[:uptime].to_i)
         pdu.add_varbind(:oid => OID.new('snmpTrapOID.0'), :type => Constants::ASN_OBJECT_ID, :value => options[:oid])
         if options[:varbinds]
@@ -86,7 +106,9 @@ module Net
             pdu.add_varbind(vb)
           end
         end
+        pdu
       end
+
     end
   end
 end

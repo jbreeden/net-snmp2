@@ -51,6 +51,7 @@ module Net
           end
           if block_given?
             yield session
+            session.close
           end
           session
         end
@@ -164,7 +165,7 @@ module Net
             end
           end
         end
-        
+
         @struct = Wrapper.snmp_sess_open(@sess.pointer)
       end
 
@@ -280,42 +281,42 @@ module Net
       # the number of seconds to block.
       # Returns the number of file descriptors handled.
       def select(timeout = nil)
-          if @fdset
-            # Re-use the same fd set buffer to avoid
-            # multiple allocation overhead.
-            @fdset.clear
-          else
-            # 8K should be plenty of space
-            @fdset = FFI::MemoryPointer.new(1024 * 8)
-          end
+        if @fdset
+          # Re-use the same fd set buffer to avoid
+          # multiple allocation overhead.
+          @fdset.clear
+        else
+          # 8K should be plenty of space
+          @fdset = FFI::MemoryPointer.new(1024 * 8)
+        end
 
-          num_fds = FFI::MemoryPointer.new(:int)
-          tv_sec = timeout ? timeout.round : 0
-          tv_usec = timeout ? (timeout - timeout.round) * 1000000 : 0
-          tval = Wrapper::TimeVal.new(:tv_sec => tv_sec, :tv_usec => tv_usec)
-          block = FFI::MemoryPointer.new(:int)
-          if timeout.nil?
-            block.write_int(0)
-          else
-            block.write_int(1)
-          end
+        num_fds = FFI::MemoryPointer.new(:int)
+        tv_sec = timeout ? timeout.round : 0
+        tv_usec = timeout ? (timeout - timeout.round) * 1000000 : 0
+        tval = Wrapper::TimeVal.new(:tv_sec => tv_sec, :tv_usec => tv_usec)
+        block = FFI::MemoryPointer.new(:int)
+        if timeout.nil?
+          block.write_int(0)
+        else
+          block.write_int(1)
+        end
 
-          Wrapper.snmp_sess_select_info(@struct, num_fds, @fdset, tval.pointer, block )
-          tv = (timeout == false ? nil : tval)
-          #debug "Calling select #{Time.now}"
-          num_ready = FFI::LibC.select(num_fds.read_int, @fdset, nil, nil, tv)
-          #debug "Done select #{Time.now}"
-          if num_ready > 0
-            Wrapper.snmp_sess_read(@struct, @fdset)
-          elsif num_ready == 0
-            Wrapper.snmp_sess_timeout(@struct)
-          elsif num_ready == -1
-            # error.  check snmp_error?
-            error("select")
-          else
-            error("wtf is wrong with select?")
-          end
-          num_ready
+        Wrapper.snmp_sess_select_info(@struct, num_fds, @fdset, tval.pointer, block )
+        tv = (timeout == false ? nil : tval)
+        #debug "Calling select #{Time.now}"
+        num_ready = FFI::LibC.select(num_fds.read_int, @fdset, nil, nil, tv)
+        #debug "Done select #{Time.now}"
+        if num_ready > 0
+          Wrapper.snmp_sess_read(@struct, @fdset)
+        elsif num_ready == 0
+          Wrapper.snmp_sess_timeout(@struct)
+        elsif num_ready == -1
+          # error.  check snmp_error?
+          error("select")
+        else
+          error("wtf is wrong with select?")
+        end
+        num_ready
       end
 
       alias :poll :select
