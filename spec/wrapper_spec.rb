@@ -2,8 +2,8 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 
 describe "Net::SNMP::Wrapper" do
   def init_session
-    community = "demopublic"
-    peername = "test.net-snmp.org"
+    community = "public"
+    peername = "localhost"
 
     @session = Net::SNMP::Wrapper::SnmpSession.new(nil)
     Net::SNMP::Wrapper.snmp_sess_init(@session.pointer)
@@ -33,11 +33,11 @@ describe "Net::SNMP::Wrapper" do
 
     response_ptr = FFI::MemoryPointer.new(:pointer)
     status = Net::SNMP::Wrapper.snmp_sess_synch_response(@handle, @pdu.pointer, response_ptr)
-    status.should eql(0)
+    expect(status).to eql(0)
 
     response = Net::SNMP::Wrapper::SnmpPdu.new(response_ptr.read_pointer)
     value = response.variables.val[:string].read_string(response.variables.val_len)
-    value.should eql('test.net-snmp.org')
+    expect(value).to eq $test_mib['sysDescr.0']
   end
 
   it "wrapper should snmpget asynchronously" do
@@ -63,7 +63,7 @@ describe "Net::SNMP::Wrapper" do
       Net::SNMP::Wrapper.snmp_select_info(fds, fdset, tval.pointer, block )
       FFI::LibC.select(fds.read_int, fdset, nil, nil, nil)
       Net::SNMP::Wrapper.snmp_read(fdset)
-      did_callback.should be(1)
-      result.should eql('test.net-snmp.org')
+      expect(did_callback).to be(1)
+      expect(result).to eq $test_mib['sysDescr.0']
   end
 end

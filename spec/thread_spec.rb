@@ -4,15 +4,15 @@ describe "in a thread" do
   it "should get an oid asynchronously in a thread" do
     did_callback = false
     dispatch_thread = Net::SNMP::Dispatcher.thread_loop
-    Net::SNMP::Session.open(:peername => 'test.net-snmp.org', :community => 'demopublic') do |s|
+    Net::SNMP::Session.open(:peername => 'localhost', :community => 'public') do |s|
       s.get(["sysDescr.0", "sysContact.0"]) do |op, result|
         did_callback = true
-        result.varbinds[0].value.should eql("test.net-snmp.org")
-        result.varbinds[1].value.should match(/Coders/)
+        expect(result.varbinds[0].value).to eq $test_mib['sysDescr.0']
+        expect(result.varbinds[1].value).to eq $test_mib['sysContact.0']
       end
     end
     sleep 3
-    did_callback.should be(true)
+    expect(did_callback).to be(true)
 
     Thread.kill(dispatch_thread)
   end

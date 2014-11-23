@@ -7,18 +7,13 @@ class Message
     Message.new(packet)
   end
 
-  # Could have been an instance method, but a response pdu
-  # isn't really an intrinsic property of all messages. So,
-  # going with class method instead.
-  def self.response_pdu_for(message)
-    response_pdu = PDU.new(Constants::SNMP_MSG_RESPONSE)
-    response_pdu.reqid = message.pdu.reqid
-    response_pdu.version = message.version
-    response_pdu.community = message.pdu.community
-    response_pdu
-  end
-
-  attr_accessor :version, :community, :pdu, :version_ptr, :community_ptr
+  attr_accessor :version,
+    :community,
+    :pdu,
+    :version_ptr,
+    :community_ptr,
+    :source_address,
+    :source_port
 
   def version_name
     case @version
@@ -33,14 +28,6 @@ class Message
     end
   end
 
-  private
-
-  attr_accessor :type,
-    :length,
-    :data,
-    :cursor,
-    :bytes_remaining
-
   def initialize(packet)
     @version = nil
     @version_ptr = FFI::MemoryPointer.new(:long, 1)
@@ -53,9 +40,49 @@ class Message
     @cursor_ptr = @data_ptr
     @bytes_remaining_ptr = FFI::MemoryPointer.new(:int, 1)
     @bytes_remaining_ptr.write_bytes([@packet_length].pack("L"))
-    debug "MESSAGE INITIALIZED\n#{self}"
+    @source_address = @packet[1][3]
+    @source_port = @packet[1][1]
+    #debug "MESSAGE INITIALIZED\n#{self}"
     parse
   end
+
+  # Sends the given PDU back to the origin of this message.
+  # The origin is the same address and port that the message was
+  # received from.
+  def respond(response_pdu)
+    Session.open(peername: source_address, port: source_port, version: version_name) do |sess|
+      sess.send_pdu(response_pdu)
+    end
+  end
+
+  # Sends a response PDU to the source of the message with all of the same
+  # varbinds. (Useful for sets & informs, where this is how you indicate success)
+  def echo
+    response_pdu = make_response_pdu
+    pdu.varbinds.each do |vb|
+      response_pdu.add_varbind(oid: vb.oid, type: vb.type, value: vb.value)
+    end
+    respond(response_pdu)
+  end
+
+  # Constructs a PDU for responding to this message.
+  # This makes sure the PDU has the right request ID, version,
+  # and community set.
+  def make_response_pdu
+    response_pdu = PDU.new(Constants::SNMP_MSG_RESPONSE)
+    response_pdu.reqid = pdu.reqid
+    response_pdu.version = version
+    response_pdu.community = pdu.community
+    response_pdu
+  end
+
+  private
+
+  attr_accessor :type,
+    :length,
+    :data,
+    :cursor,
+    :bytes_remaining
 
   def parse
     parse_length
@@ -70,7 +97,7 @@ class Message
     unless @type_ptr.read_int == 48
       raise "Invalid SNMP packet. Message should start with a sequence declaration"
     end
-    debug "MESSAGE SEQUENCE HEADER PARSED\n#{self}"
+    #debug "MESSAGE SEQUENCE HEADER PARSED\n#{self}"
   end
 
   def parse_version
@@ -82,7 +109,7 @@ class Message
       @version_ptr.total)
 
     @version = @version_ptr.read_long
-    debug "VERSION NUMBER PARSED\n#{self}"
+    #debug "VERSION NUMBER PARSED\n#{self}"
   end
 
   def parse_community
@@ -96,7 +123,7 @@ class Message
       community_length_ptr)
 
     @community = @community_ptr.read_string
-    debug "COMMUNITY PARSED\n#{self}"
+    #debug "COMMUNITY PARSED\n#{self}"
   end
 
   def parse_pdu
@@ -118,7 +145,7 @@ class Message
 
     Net::SNMP::Wrapper.snmp_pdu_parse(pdu_struct_ptr, @cursor_ptr, @bytes_remaining_ptr)
     @pdu = Net::SNMP::PDU.new(pdu_struct_ptr.pointer)
-    debug "PDU PARSED\n#{self}"
+    #debug "PDU PARSED\n#{self}"
   end
 
   def to_s

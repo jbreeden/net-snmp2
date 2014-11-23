@@ -38,6 +38,11 @@ module Net::SNMP
       varbind.oid
     end
 
+    # The MIB variable name of the current varbind
+    def variable
+      oid.label
+    end
+
     # The OID of the current varbind being processed as a string.
     def oid_str
       varbind.oid.to_s
@@ -99,6 +104,12 @@ module Net::SNMP
     def no_such_instance(oid=nil)
       oid ||= varbind.oid
       add_varbind(oid: oid, type: Constants::SNMP_NOSUCHINSTANCE)
+    end
+
+    # Adds a varbind to the response indicating that the END OF MIB has been reached
+    def end_of_mib
+      oid ||= varbind.oid
+      add_varbind(oid: oid, type: Constants::SNMP_ENDOFMIBVIEW)
     end
 
     # Adds a varbind to the response PDU.

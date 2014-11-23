@@ -13,27 +13,28 @@ describe "in fiber" do
 
   it "get should work in a fiber with synchronous calling style" do
     wrap_fiber do
-        session = Net::SNMP::Session.open(:peername => 'test.net-snmp.org', :community => 'demopublic')
+        session = Net::SNMP::Session.open(:peername => 'localhost', :community => 'public')
         result = session.get("sysDescr.0")
-        result.varbinds[0].value.should eql("test.net-snmp.org")
+        expect(result.varbinds[0].value).to eq $test_mib["sysDescr.0"]
     end
   end
 
   it "getnext" do
     wrap_fiber do
-      Net::SNMP::Session.open(:peername => "test.net-snmp.org", :community => "demopublic" ) do |sess|
+      Net::SNMP::Session.open(:peername => "localhost", :community => "public" ) do |sess|
         result = sess.get_next(["sysUpTimeInstance.0"])
-        result.varbinds.first.oid.oid.should eql("1.3.6.1.2.1.1.4.0")
-        result.varbinds.first.value.should match(/Net-SNMP Coders/)
+        expect(result.varbinds.first.oid.oid).to eq Net::SNMP::MIB.translate('sysContact.0')
+        expect(result.varbinds.first.value).to eq $test_mib['sysContact.0']
       end
     end
   end
 
   it "should get using snmpv3" do
+    pending
     wrap_fiber do
-      Net::SNMP::Session.open(:peername => 'test.net-snmp.org', :version => 3, :username => 'MD5User', :security_level => Net::SNMP::Constants::SNMP_SEC_LEVEL_AUTHNOPRIV, :auth_protocol => :md5, :password => 'The Net-SNMP Demo Password') do |sess|
+      Net::SNMP::Session.open(:peername => 'localhost', :version => 3, :username => 'MD5User', :security_level => Net::SNMP::Constants::SNMP_SEC_LEVEL_AUTHNOPRIV, :auth_protocol => :md5, :password => 'The Net-SNMP Demo Password') do |sess|
         result = sess.get(["sysDescr.0"])
-        result.varbinds.first.value.should eql('test.net-snmp.org')
+        expect(result.varbinds.first.value).to eq $test_mib["sysDescr.0"]
       end
     end
   end

@@ -1,6 +1,8 @@
 module Net
   module SNMP
     class Error < RuntimeError
+      include Debug
+
       attr_accessor :status, :errno, :snmp_err, :snmp_msg
       def initialize(opts = {})
         @status = opts[:status]
@@ -14,12 +16,17 @@ module Net
       end
 
       def print
-        puts "SNMP Error: #{self.class.to_s}"
-        puts "message = #{message}"
-        puts "status = #{@status}"
-        puts "errno = #{@errno}"
-        puts "snmp_err = #{@snmp_err}"
-        puts "snmp_msg = #{@snmp_msg}"
+        message = <<-EOF
+
+        SNMP Error: #{self.class.to_s}
+        message = #{message}
+        status = #{@status}
+        errno = #{@errno}
+        snmp_err = #{@snmp_err}
+        snmp_msg = #{@snmp_msg}
+        EOF
+
+        error(message.gsub /^\s*/, '')
       end
     end
 

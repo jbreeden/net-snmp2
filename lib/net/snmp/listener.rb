@@ -37,13 +37,11 @@ module Net::SNMP
     #
     # The block provided will be called back for each message as follows:
     #
-    #   block[message, from_address, from_port]
+    #   block[message]
     #
     # Where
     #
     # - `message` is the parsed Net::SNMP::Message object
-    # - `from_address` is a string representing the address of the host sending the request
-    # - `from_port` is the port the host sent the request from
     def on_message(&block)
       @callback = block
     end
@@ -62,7 +60,7 @@ module Net::SNMP
           return if @killed
           time "Message Processing" do
             message = Message.parse(@packet)
-            @callback[message, @packet[1][3], @packet[1][1]] if @callback
+            @callback[message] if @callback
           end
         rescue Timeout::Error => timeout
           next
