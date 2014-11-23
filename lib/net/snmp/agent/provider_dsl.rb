@@ -38,6 +38,11 @@ module Net::SNMP
       varbind.oid
     end
 
+    # The MIB variable name of the current varbind
+    def variable
+      oid.label
+    end
+
     # The OID of the current varbind being processed as a string.
     def oid_str
       varbind.oid.to_s

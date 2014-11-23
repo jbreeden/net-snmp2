@@ -42,7 +42,7 @@ class Message
     @bytes_remaining_ptr.write_bytes([@packet_length].pack("L"))
     @source_address = @packet[1][3]
     @source_port = @packet[1][1]
-    debug "MESSAGE INITIALIZED\n#{self}"
+    #debug "MESSAGE INITIALIZED\n#{self}"
     parse
   end
 
@@ -97,7 +97,7 @@ class Message
     unless @type_ptr.read_int == 48
       raise "Invalid SNMP packet. Message should start with a sequence declaration"
     end
-    debug "MESSAGE SEQUENCE HEADER PARSED\n#{self}"
+    #debug "MESSAGE SEQUENCE HEADER PARSED\n#{self}"
   end
 
   def parse_version
@@ -109,7 +109,7 @@ class Message
       @version_ptr.total)
 
     @version = @version_ptr.read_long
-    debug "VERSION NUMBER PARSED\n#{self}"
+    #debug "VERSION NUMBER PARSED\n#{self}"
   end
 
   def parse_community
@@ -123,7 +123,7 @@ class Message
       community_length_ptr)
 
     @community = @community_ptr.read_string
-    debug "COMMUNITY PARSED\n#{self}"
+    #debug "COMMUNITY PARSED\n#{self}"
   end
 
   def parse_pdu
@@ -145,7 +145,7 @@ class Message
 
     Net::SNMP::Wrapper.snmp_pdu_parse(pdu_struct_ptr, @cursor_ptr, @bytes_remaining_ptr)
     @pdu = Net::SNMP::PDU.new(pdu_struct_ptr.pointer)
-    debug "PDU PARSED\n#{self}"
+    #debug "PDU PARSED\n#{self}"
   end
 
   def to_s

@@ -5,24 +5,15 @@ module Debug
     attr_accessor :logger
   end
 
-  def debug(msg)
-    Debug.logger.debug msg if Debug.logger
-  end
-
-  def info(msg)
-    Debug.logger.info msg if Debug.logger
-  end
-
-  def warn(msg)
-    Debug.logger.warn msg if Debug.logger
-  end
-
-  def error(msg)
-    Debug.logger.error msg if Debug.logger
-  end
-
-  def fatal(msg)
-    Debug.logger.fatal msg if Debug.logger
+  [:debug, :info, :warn, :error, :fatal].each do |log_level|
+    self.module_eval %Q{
+      def #{log_level}(msg = nil, &block)
+        if Debug.logger && (Debug.logger.level <= Logger::#{log_level.upcase})
+          Debug.logger.send(:#{log_level}, msg)
+          block[] if block_given?
+        end
+      end
+    }
   end
 
   def time(label, &block)

@@ -220,7 +220,8 @@ module Net
       end
 
       def print
-        puts "PDU"
+        puts "== PDU =="
+        puts "Command: #{command}"
         if command == Constants::SNMP_MSG_TRAP
             puts " - Enterprise: #{enterprise}"
             puts " - Trap Type: #{trap_type}"

@@ -30,16 +30,7 @@ describe Net::SNMP::TrapSession do
     did_callback = false
     Net::SNMP::TrapSession.open(:peername => 'localhost:163', :version => '2c') do |sess|
       resp = sess.inform(:oid => 'coldStart.0')
-      has_cold_start_oid = false
-      # Got some weird segfaults when using rspec's ".should include {...}"
-      # matcher, so I did this manually.
-      resp.varbinds.each do |vb|
-        if (vb.oid.to_s == Net::SNMP::MIB.translate('snmpTrapOID.0')) &&
-            (vb.value.to_s == Net::SNMP::MIB.translate('coldStart.0'))
-          has_cold_start_oid = true
-        end
-      end
-      has_cold_start_oid.should eq(true)
+      resp.should eq(:success)
     end
   end
 end

@@ -89,7 +89,6 @@ module Net
         else
           Constants::SNMP_VERSION_1
         end
-        debug "setting timeout = #{@timeout} retries = #{@retries}"
         @sess.timeout = @timeout * 1000000
         @sess.retries = @retries
 
@@ -172,13 +171,13 @@ module Net
       # Close the snmp session and free associated resources.
       def close
         if Net::SNMP.thread_safe
-          self.class.lock.synchronize {
+          Session.lock.synchronize {
             Wrapper.snmp_sess_close(@struct)
-            self.class.sessions.delete(self.sessid)
+            Session.sessions.delete(self.sessid)
           }
         else
           Wrapper.snmp_sess_close(@struct)
-          self.class.sessions.delete(self.sessid)
+          Session.sessions.delete(self.sessid)
         end
       end
 
@@ -281,14 +280,13 @@ module Net
       # the number of seconds to block.
       # Returns the number of file descriptors handled.
       def select(timeout = nil)
-        if @fdset
-          # Re-use the same fd set buffer to avoid
-          # multiple allocation overhead.
-          @fdset.clear
-        else
+        info "[Session#Select] entering"
+        unless @fdset
           # 8K should be plenty of space
           @fdset = FFI::MemoryPointer.new(1024 * 8)
         end
+
+        @fdset.clear
 
         num_fds = FFI::MemoryPointer.new(:int)
         tv_sec = timeout ? timeout.round : 0
@@ -303,9 +301,7 @@ module Net
 
         Wrapper.snmp_sess_select_info(@struct, num_fds, @fdset, tval.pointer, block )
         tv = (timeout == false ? nil : tval)
-        #debug "Calling select #{Time.now}"
         num_ready = FFI::LibC.select(num_fds.read_int, @fdset, nil, nil, tv)
-        #debug "Done select #{Time.now}"
         if num_ready > 0
           Wrapper.snmp_sess_read(@struct, @fdset)
         elsif num_ready == 0
@@ -316,6 +312,7 @@ module Net
         else
           error("wtf is wrong with select?")
         end
+        info "[Session#Select] num_ready = #{num_ready}"
         num_ready
       end
 
@@ -352,7 +349,7 @@ module Net
             # So we remove it and resend all the rest
             if pdu.error? && pdu.errindex == i + 1
               oidlist.pop  # remove the bad oid
-              debug "caught error"
+              debug "Error on: #{pdu.varbinds[pdu.errindex - 1].oid}"
               if pdu.varbinds.size > i+1
                 # recram rest of oids on list
                 ((i+1)..pdu.varbinds.size).each do |j|
@@ -435,13 +432,19 @@ module Net
       #   rescue Net::SNMP::Error => e
       #     puts e.message
       #   end
-      def send_pdu(pdu, options = {},  &callback)
+      def send_pdu(pdu, options = {}, &callback)
         if options[:blocking]
           return send_pdu_blocking(pdu)
         end
+
+        debug "Sending: " do
+          pdu.print
+        end
+
         if block_given?
+          debug "Setting callback for reqid #{pdu.reqid}"
           @requests[pdu.reqid] = callback
-          debug "calling async_send"
+          debug "Calling snmp_sess_async_send"
           if Wrapper.snmp_sess_async_send(@struct, pdu.pointer, sess_callback, nil) == 0
             error("snmp_get async failed")
           end
@@ -469,6 +472,36 @@ module Net
             send_pdu_blocking(pdu)
           end
         end
+
+        # if block_given?
+        #   debug "Setting callback for reqid #{pdu.reqid}"
+        #   @requests[pdu.reqid] = callback
+        #   debug "Calling snmp_sess_async_send"
+        #   if Wrapper.snmp_sess_async_send(@struct, pdu.pointer, sess_callback, nil) == 0
+        #     error("snmp_get async failed")
+        #   end
+        #   nil
+        # elsif defined?(EM) && EM.reactor_running? && defined?(Fiber)
+        #   f = Fiber.current
+        #   send_pdu pdu do | op, response_pdu |
+        #     f.resume([op, response_pdu])
+        #   end
+        #   op, result = Fiber.yield
+        #   case op
+        #     when :timeout
+        #       raise TimeoutError.new, "timeout"
+        #     when :send_failed
+        #       error "send failed"
+        #     when :success
+        #       result
+        #     when :connect, :disconnect
+        #       nil   #does this ever happen?
+        #     else
+        #       error "unknown operation #{op}"
+        #   end
+        # else
+        #   send_pdu_blocking(pdu)
+        # end
       end
 
       def send_pdu_blocking(pdu)
@@ -477,7 +510,8 @@ module Net
           # Since we don't expect a response, the native net-snmp lib is going to free this
           # pdu for us. Polite, though this may be, it causes intermittent segfaults when freeing
           # memory malloc'ed by ruby. So, clone the pdu into a new memory buffer,
-          # and pass that along.
+          # and pass that along. The clone is then freed by the native lib. The sent
+          # pdu must be freed by the caller.
           clone = Wrapper.snmp_clone_pdu(pdu.struct)
           status = Wrapper.snmp_sess_send(@struct, clone)
           if status == 0
@@ -518,7 +552,7 @@ module Net
 
       def sess_callback
         @sess_callback ||= FFI::Function.new(:int, [:int, :pointer, :int, :pointer, :pointer]) do |operation, session, reqid, pdu_ptr, magic|
-          debug "in callback #{operation.inspect} #{session.inspect}"
+          debug "in sess_callback #{operation.inspect} #{session.inspect}"
           op = case operation
             when Constants::NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE
               :success
@@ -536,6 +570,9 @@ module Net
 
           if @requests[reqid]
             pdu = PDU.new(pdu_ptr)
+            debug "Received:" do
+              pdu.print
+            end
             callback_return = @requests[reqid].call(op, pdu)
             @requests.delete(reqid)
             callback_return == false ? 0 : 1 #if callback returns false (failure), pass it on.  otherwise return 1 (success)

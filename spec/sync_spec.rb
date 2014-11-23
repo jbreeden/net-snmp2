@@ -3,26 +3,26 @@ require File.expand_path(File.dirname(__FILE__) + '/spec_helper')
 describe "synchronous calls" do
   context "version 1" do
     it "get should succeed" do
-      Net::SNMP::Session.open(:peername => "test.net-snmp.org", :community => "demopublic" ) do |sess|
+      Net::SNMP::Session.open(:peername => "localhost", :community => "public" ) do |sess|
         result = sess.get("sysDescr.0")
-        result.varbinds.first.value.should eql("test.net-snmp.org")
+        result.varbinds.first.value.should eql($test_mib['sysDescr.0'])
       end
     end
 
     it "multiple calls within session should succeed" do
-      Net::SNMP::Session.open(:peername => "test.net-snmp.org", :community => "demopublic" ) do |sess|
+      Net::SNMP::Session.open(:peername => "localhost", :community => "public" ) do |sess|
         result = sess.get("sysDescr.0")
-        result.varbinds.first.value.should eql("test.net-snmp.org")
+        result.varbinds.first.value.should eql($test_mib['sysDescr.0'])
         second = sess.get("sysName.0")
-        second.varbinds.first.value.should eql("test.net-snmp.org")
+        second.varbinds.first.value.should eql($test_mib["sysName.0"])
       end
     end
 
     it "get should succeed with multiple oids" do
-      Net::SNMP::Session.open(:peername => "test.net-snmp.org", :community => 'demopublic' ) do |sess|
+      Net::SNMP::Session.open(:peername => "localhost", :community => 'public' ) do |sess|
         result = sess.get(["sysDescr.0", "sysName.0"])
-        result.varbinds[0].value.should eql("test.net-snmp.org")
-        result.varbinds[1].value.should eql("test.net-snmp.org")
+        result.varbinds[0].value.should eql($test_mib['sysDescr.0'])
+        result.varbinds[1].value.should eql($test_mib["sysName.0"])
       end
     end
 
@@ -34,18 +34,19 @@ describe "synchronous calls" do
     end
 
     it "getnext should succeed" do
-      Net::SNMP::Session.open(:peername => "test.net-snmp.org", :community => "demopublic" ) do |sess|
+      Net::SNMP::Session.open(:peername => "localhost", :community => "public" ) do |sess|
         result = sess.get_next(["sysUpTimeInstance.0"])
         result.varbinds.first.oid.oid.should eql("1.3.6.1.2.1.1.4.0")
-        result.varbinds.first.value.should match(/Net-SNMP Coders/)
+        # Set earlier. Yes, I know, tests shouldn't depend on eachother...
+        result.varbinds.first.value.should match(/newContact/)
       end
     end
 
     it "getbulk should succeed" do
-      Net::SNMP::Session.open(:peername => "test.net-snmp.org" , :version => '2c', :community => 'demopublic') do |sess|
+      Net::SNMP::Session.open(:peername => "localhost" , :version => '2c', :community => 'public') do |sess|
         result = sess.get_bulk(["sysContact.0"], :max_repetitions => 10)
         result.varbinds.first.oid.name.should eql("1.3.6.1.2.1.1.5.0")
-        result.varbinds.first.value.should eql("test.net-snmp.org")
+        result.varbinds.first.value.should eql($test_mib["sysName.0"])
       end
     end
 
@@ -57,7 +58,7 @@ describe "synchronous calls" do
     end
 
     it "rasises an when a non-existant MIB variable is requested" do
-      Net::SNMP::Session.open(:peername => "test.net-snmp.org", :community => "demopublic" ) do |sess|
+      Net::SNMP::Session.open(:peername => "localhost", :community => "public" ) do |sess|
         expect { sess.get(["XXXsysDescr.0"]) }.to raise_error
       end
     end
@@ -70,9 +71,9 @@ describe "synchronous calls" do
     end
 
     it "walk should work" do
-      session = Net::SNMP::Session.open(:peername => 'test.net-snmp.org', :version => 1, :community => 'demopublic')
+      session = Net::SNMP::Session.open(:peername => 'localhost', :version => 1, :community => 'public')
       results = session.walk("system")
-      results['1.3.6.1.2.1.1.1.0'].should match(/test.net-snmp.org/)
+      results['1.3.6.1.2.1.1.1.0'].should eq($test_mib["sysDescr.0"])
     end
 
     it "walk should work with multiple oids" do
@@ -95,7 +96,7 @@ describe "synchronous calls" do
     end
 
     it "get a value with oid type should work" do
-      Net::SNMP::Session.open(:peername => 'test.net-snmp.org', :community => 'demopublic') do |sess|
+      Net::SNMP::Session.open(:peername => 'localhost', :community => 'public') do |sess|
         res = sess.get("sysObjectID.0")
         res.varbinds.first.value.to_s.should eql('1.3.6.1.4.1.8072.3.2.10')
       end
@@ -108,9 +109,10 @@ describe "synchronous calls" do
 
   context "version 3" do
     it "should get using snmpv3" do
-      Net::SNMP::Session.open(:peername => 'test.net-snmp.org', :version => 3, :username => 'MD5User', :security_level => Net::SNMP::Constants::SNMP_SEC_LEVEL_AUTHNOPRIV, :auth_protocol => :md5, :password => 'The Net-SNMP Demo Password') do |sess|
+      pending
+      Net::SNMP::Session.open(:peername => 'localhost', :version => 3, :username => 'MD5User', :security_level => Net::SNMP::Constants::SNMP_SEC_LEVEL_AUTHNOPRIV, :auth_protocol => :md5, :password => 'The Net-SNMP Demo Password') do |sess|
         result = sess.get("sysDescr.0")
-        result.varbinds.first.value.should eql('test.net-snmp.org')
+        result.varbinds.first.value.should eql($test_mib['sysDescr.0'])
       end
     end
     it "should set using snmpv3" do

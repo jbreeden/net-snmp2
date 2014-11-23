@@ -49,12 +49,14 @@ module Net::SNMP
     # Creates a new Provider with `oid` as the root of its subtree
     def initialize(oid)
       if oid.kind_of?(Symbol)
-        raise "Cannot provide symbol '#{oid}'. (Did you mean to use :all?)"
+        unless oid == :all
+          raise "Cannot provide symbol '#{oid}'. (Did you mean to use :all?)"
+        end
+        @oid = oid
       else
         # Guarantee OID is in numeric form
-        oid = OID.new(oid).to_s
+        @oid = OID.new(oid).to_s
       end
-      @oid = oid
     end
 
     # Gets the handler for the given command type from this provider.
