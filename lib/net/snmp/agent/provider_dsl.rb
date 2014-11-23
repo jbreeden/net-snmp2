@@ -106,6 +106,12 @@ module Net::SNMP
       add_varbind(oid: oid, type: Constants::SNMP_NOSUCHINSTANCE)
     end
 
+    # Adds a varbind to the response indicating that the END OF MIB has been reached
+    def end_of_mib
+      oid ||= varbind.oid
+      add_varbind(oid: oid, type: Constants::SNMP_ENDOFMIBVIEW)
+    end
+
     # Adds a varbind to the response PDU.
     # MUST use this method (or one that delegates to it)
     # to set response varbinds on the response_pdu to make sure

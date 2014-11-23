@@ -7,15 +7,15 @@ describe "em" do
     EM.run do
       Net::SNMP::Dispatcher.em_loop
 
-      session = Net::SNMP::Session.open(:peername => 'test.net-snmp.org', :community => 'demopublic') do |s|
+      session = Net::SNMP::Session.open(:peername => 'localhost', :community => 'public') do |s|
         s.get("sysDescr.0") do |op, result|
           did_callback = true
-          result.varbinds[0].value.should eql("test.net-snmp.org")
+          expect(result.varbinds[0].value).to eq $test_mib['sysDescr.0']
         end
       end
 
       EM.add_timer(3) do
-        did_callback.should eq(true)
+        expect(did_callback).to eq(true)
         EM.stop
       end
     end

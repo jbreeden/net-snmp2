@@ -12,12 +12,12 @@ extend Net::SNMP::Debug
 
 100000.times do |i|
   time "Inform ##{i}" do
-    session.inform(
+    puts "Inform #{i}: " + session.inform(
       oid: '1.3.1.1',
       uptime: 1000,
       varbinds: [
         {oid: '1.3.2.2', value: 'test'}
       ]
-    )
+    ).to_s
   end
 end

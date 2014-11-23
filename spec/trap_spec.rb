@@ -15,14 +15,14 @@ describe Net::SNMP::TrapSession do
         uptime: 1000,
         agent_addr: '127.0.0.1'
       )
-      res.should eq(:success)
+      expect(res).to eq(:success)
     end
   end
 
   it "should send v2 trap" do
     Net::SNMP::TrapSession.open(:peername => 'localhost:163', :version => '2c') do |sess|
       res = sess.trap_v2(:oid => 'sysContact.0', :uptime => 1000)
-      res.should eq(:success)
+      expect(res).to eq(:success)
     end
   end
 
@@ -30,7 +30,7 @@ describe Net::SNMP::TrapSession do
     did_callback = false
     Net::SNMP::TrapSession.open(:peername => 'localhost:163', :version => '2c') do |sess|
       resp = sess.inform(:oid => 'coldStart.0')
-      resp.should eq(:success)
+      expect(resp).to eq(:success)
     end
   end
 end

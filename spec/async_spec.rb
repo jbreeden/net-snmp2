@@ -1,5 +1,4 @@
 require_relative './spec_helper'
-#require_relative './test_agent'
 
 describe "async" do
   context "version 1" do
@@ -10,14 +9,12 @@ describe "async" do
         sess = Net::SNMP::Session.open(:peername => 'localhost', port: 161, :community => 'public', version: '2c') do |s|
           s.get(["sysDescr.0", "sysContact.0"]) do |op, pdu|
             did_callback = true
-            pdu.print
-            pdu.varbinds[0].value.should eq($test_mib['sysDescr.0'])
-            pdu.varbinds[1].value.should eq($test_mib['sysContact.0'])
+            expect(pdu.varbinds[0].value).to eq($test_mib['sysDescr.0'])
+            expect(pdu.varbinds[1].value).to eq($test_mib['sysContact.0'])
           end
         end
-        puts "Calling select"
         Net::SNMP::Dispatcher.select(false)
-        did_callback.should be(true)
+        expect(did_callback).to be(true)
       end
 
       context "when a timeout occurrs" do
@@ -26,14 +23,13 @@ describe "async" do
           sess = Net::SNMP::Session.open(:peername => 'www.yahoo.com', :timeout => 1, :retries => 0) do |sess|
             sess.get("sysDescr.0") do |op, pdu|
               did_callback = true
-              op.should eql(:timeout)
+              expect(op).to eql(:timeout)
             end
           end
           sleep 2
-          pdu = sess.select(10)
-
-          pdu.should eql(0)
-          did_callback.should eq(true)
+          num_ready = sess.select(10)
+          expect(num_ready).to eql(0)
+          expect(did_callback).to eq(true)
         end
       end
     end
@@ -44,12 +40,12 @@ describe "async" do
         Net::SNMP::Session.open(:peername => 'localhost', :community => 'public', version: '2c') do |s|
           s.get_next(["sysDescr", "sysContact"]) do |op, pdu|
             did_callback = true
-            pdu.varbinds[0].value.should eq $test_mib['sysDescr.0']
-            pdu.varbinds[1].value.should eq $test_mib['sysContact.0']
+            expect(pdu.varbinds[0].value).to eq $test_mib['sysDescr.0']
+            expect(pdu.varbinds[1].value).to eq $test_mib['sysContact.0']
           end
         end
         Net::SNMP::Dispatcher.select(false)
-        did_callback.should be(true)
+        expect(did_callback).to be(true)
       end
     end
 
@@ -59,12 +55,12 @@ describe "async" do
       Net::SNMP::Session.open(:peername => 'localhost', :community => 'public', :version => '2c') do |s|
         s.get(["sysDescr.0", "sysContact.0"]) do |op, pdu|
           did_callback = true
-          pdu.varbinds[0].value.should eq $test_mib['sysDescr.0']
-          pdu.varbinds[1].value.should eq $test_mib['sysContact.0']
+          expect(pdu.varbinds[0].value).to eq $test_mib['sysDescr.0']
+          expect(pdu.varbinds[1].value).to eq $test_mib['sysContact.0']
         end
       end
       Net::SNMP::Dispatcher.select(false)
-      did_callback.should be(true)
+      expect(did_callback).to be(true)
     end
 
     it "getnext should work" do
@@ -72,12 +68,12 @@ describe "async" do
       Net::SNMP::Session.open(:peername => 'localhost', :community => 'public', :version => '2c') do |s|
         s.get_next(["sysDescr", "sysContact"]) do |op, pdu|
           did_callback = true
-          pdu.varbinds[0].value.should eq $test_agent['sysDescr.0']
-          pdu.varbinds[1].value.should eq $test_agent['sysContact.0']
+          expect(pdu.varbinds[0].value).to eq $test_mib['sysDescr.0']
+          expect(pdu.varbinds[1].value).to eq $test_mib['sysContact.0']
         end
       end
       Net::SNMP::Dispatcher.select(false)
-      did_callback.should be(true)
+      expect(did_callback).to be(true)
     end
 
   end
@@ -89,13 +85,13 @@ describe "async" do
   #     Net::SNMP::Session.open(:peername => 'localhost', :version => 3, :username => 'MD5User',:security_level => Net::SNMP::Constants::SNMP_SEC_LEVEL_AUTHNOPRIV, :auth_protocol => :md5, :password => 'The Net-SNMP Demo Password') do |sess|
   #         sess.get(["sysDescr.0"]) do |op, pdu|
   #           did_callback = true
-  #           pdu.varbinds[0].value.should eql("Linux nmsworker-devel 2.6.18-164.el5 #1 SMP Thu Sep 3 03:28:30 EDT 2009 x86_64")
+  #           expect(pdu.varbinds[0].value).to eql("Linux nmsworker-devel 2.6.18-164.el5 #1 SMP Thu Sep 3 03:28:30 EDT 2009 x86_64")
   #         end
   #         sleep(0.5)
   #         Net::SNMP::Dispatcher.select(false)
   #         #Net::SNMP::Dispatcher.select(false)
   #         #puts "done select"
-  #         did_callback.should be(true)
+  #         expect(did_callback).to be(true)
   #     end
   #   end
   #
@@ -104,13 +100,13 @@ describe "async" do
   #     sess = Net::SNMP::Session.open(:peername => 'localhost', :version => 3, :username => 'MD5User',:security_level => Net::SNMP::Constants::SNMP_SEC_LEVEL_AUTHNOPRIV, :auth_protocol => :md5, :password => 'The Net-SNMP Demo Password') do |sess|
   #       sess.get(["sysDescr.0", "sysContact.0"]) do |op,pdu|
   #         did_callback = true
-  #         pdu.varbinds[0].value.should eql("Linux nmsworker-devel 2.6.18-164.el5 #1 SMP Thu Sep 3 03:28:30 EDT 2009 x86_64")
-  #         pdu.varbinds[1].value.should eql("Root <root@localhost> (configure /etc/snmp/snmp.local.conf)")
+  #         expect(pdu.varbinds[0].value).to eql("Linux nmsworker-devel 2.6.18-164.el5 #1 SMP Thu Sep 3 03:28:30 EDT 2009 x86_64")
+  #         expect(pdu.varbinds[1].value).to eql("Root <root@localhost> (configure /etc/snmp/snmp.local.conf)")
   #       end
   #     end
   #     Net::SNMP::Dispatcher.select(false)
   #     sess.close
-  #     did_callback.should be(true)
+  #     expect(did_callback).to be(true)
   #   end
   #
   #   #  XXX  occasionally segfaulting
@@ -120,13 +116,13 @@ describe "async" do
   #     sess = Net::SNMP::Session.open(:peername => 'localhost', :version => 3, :username => 'MD5User',:security_level => Net::SNMP::Constants::SNMP_SEC_LEVEL_AUTHNOPRIV, :auth_protocol => :md5, :password => 'The Net-SNMP Demo Password') do |sess|
   #       sess.get_next(["sysDescr", "sysContact"]) do |op, pdu|
   #         did_callback = true
-  #         pdu.varbinds[0].value.should eql("Linux nmsworker-devel 2.6.18-164.el5 #1 SMP Thu Sep 3 03:28:30 EDT 2009 x86_64")
-  #         pdu.varbinds[1].value.should eql("Root <root@localhost> (configure /etc/snmp/snmp.local.conf)")
+  #         expect(pdu.varbinds[0].value).to eql("Linux nmsworker-devel 2.6.18-164.el5 #1 SMP Thu Sep 3 03:28:30 EDT 2009 x86_64")
+  #         expect(pdu.varbinds[1].value).to eql("Root <root@localhost> (configure /etc/snmp/snmp.local.conf)")
   #       end
   #     end
   #     Net::SNMP::Dispatcher.select(false)
   #     sess.close
-  #     did_callback.should be(true)
+  #     expect(did_callback).to be(true)
   #   end
   #end
 end

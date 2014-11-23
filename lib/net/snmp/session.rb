@@ -51,7 +51,6 @@ module Net
           end
           if block_given?
             yield session
-            session.close
           end
           session
         end
@@ -280,7 +279,6 @@ module Net
       # the number of seconds to block.
       # Returns the number of file descriptors handled.
       def select(timeout = nil)
-        info "[Session#Select] entering"
         unless @fdset
           # 8K should be plenty of space
           @fdset = FFI::MemoryPointer.new(1024 * 8)
@@ -312,7 +310,6 @@ module Net
         else
           error("wtf is wrong with select?")
         end
-        info "[Session#Select] num_ready = #{num_ready}"
         num_ready
       end
 
@@ -369,7 +366,6 @@ module Net
         end
         all_results
       end
-
 
       # Given a list of columns (e.g ['ifIndex', 'ifDescr'], will return a hash with
       # the indexes as keys and hashes as values.

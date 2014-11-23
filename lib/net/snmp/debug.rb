@@ -20,7 +20,7 @@ module Debug
     t_start = Time.now
     block[]
     t_end = Time.now
-    info "#{label}: #{(t_end - t_start)*1000}ms"
+    debug "#{label}: #{(t_end - t_start)*1000}ms"
   end
 
   def print_packet(packet)

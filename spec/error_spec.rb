@@ -8,7 +8,7 @@ describe "snmp errors" do
         sess.get("sysDescr.0")
       rescue Net::SNMP::Error => e
         e.print
-        e.status.should eql(Net::SNMP::Constants::STAT_TIMEOUT)
+        expect(e.status).to eql(Net::SNMP::Constants::STAT_TIMEOUT)
       end
     end
   end
@@ -28,7 +28,7 @@ describe "snmp errors" do
         EM.stop
       }.resume(nil)
     }
-    got_error.should eq(true)
+    expect(got_error).to eq(true)
   end
 
 end
