@@ -1,10 +1,9 @@
 Notes
 -----
 
-- To test sets, you have to have a local snmpd running with write permissions
-- For your local agent, use read community "public" & write community "private"
-- A free simulator can be downloaded from [veraxsystems](http://www.veraxsystems.com/en/products/free-snmp-agent-simulator)
-  + TODO: This simulator could be used to replace the dependency on test.net-snmp.org
+- For the tests to run, you must first run `ruby spec/test_agent.r`
+- You also need to run an external trap receiver
+  + I'm currently using MIBBrowser's builtin receiver
 
 Latest Results
 --------------
@@ -14,14 +13,12 @@ Generated with `rspec -f d -o spec/spec.txt --no-color`
 ```
 async
   version 1
-    get should work
-    get should return an error
     getnext should work
+    get
+      retrieves scalar values
+      when a timeout occurrs
+        calls back with :timeout when a timeout occurrs
   version 2
-    get should work
-    getnext should work
-  version 3
-    should get async using snmpv3
     get should work
     getnext should work
 
@@ -35,16 +32,28 @@ snmp errors
 in fiber
   get should work in a fiber with synchronous calling style
   getnext
-  should get using snmpv3
+  should get using snmpv3 (PENDING: No reason given)
+
+Net::SNMP::MIB
+  ::translate
+    translates OIDs to variable names including instance indexes
+    translates variable names to OIDs including instance indexes
+  ::[]
+    can retrieve MIB nodes by variable name
+    can retrieve MIB nodes by numeric oid
 
 Net::SNMP::MIB::Node
-  should get info for sysDescr
-  should get parent
-  should get node children
-  should get siblings
-  should get oid
-  should get by oid
-  should do stuff
+  ::get_node
+    retrieves MIB nodes by variable name
+    retrieves MIB nodes by numeric oid
+  #parent
+    links to the parent node
+  #children
+    contains Node objects for all child nodes
+  #siblings
+    contains an array of sibling nodes
+  #oid
+    is an OID object for the node
 
 Net::SNMP::OID
   should instantiate valid oid with numeric
@@ -60,24 +69,20 @@ synchronous calls
     getnext should succeed
     getbulk should succeed
     getbulk should succeed with multiple oids
-    get should return error with invalid oid
+    rasises an when a non-existant MIB variable is requested
     get_table should work
     walk should work
     walk should work with multiple oids
     get_columns should work
     get a value with oid type should work
-  version 3
-    should get using snmpv3
-    should set using snmpv3 (PENDING: No reason given)
-    should get using authpriv (PENDING: No reason given)
 
 in a thread
   should get an oid asynchronously in a thread
 
-snmp traps
+Net::SNMP::TrapSession
   should send a v1 trap
-  should send a v2 inform (PENDING: still working on it)
-  should send v2 trap (PENDING: still working on it)
+  should send v2 trap
+  should send a v2 inform
 
 Net::SNMP::Utility
   should compare oids
@@ -87,19 +92,10 @@ Net::SNMP::Wrapper
   wrapper should snmpget asynchronously
 
 Pending:
-  synchronous calls version 3 should set using snmpv3
+  in fiber should get using snmpv3
     # No reason given
-    # ./spec/sync_spec.rb:117
-  synchronous calls version 3 should get using authpriv
-    # No reason given
-    # ./spec/sync_spec.rb:125
-  snmp traps should send a v2 inform
-    # still working on it
-    # ./spec/trap_spec.rb:14
-  snmp traps should send v2 trap
-    # still working on it
-    # ./spec/trap_spec.rb:26
+    # ./spec/fiber_spec.rb:32
 
-Finished in 25.41 seconds (files took 0.38735 seconds to load)
-47 examples, 0 failures, 4 pending
+Finished in 29.01 seconds (files took 0.34884 seconds to load)
+44 examples, 0 failures, 1 pending
 ```
