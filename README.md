@@ -36,10 +36,13 @@ Notes
 -----
 
 - TrapHandler & Agent support doesn't work on default Windows build of net-snmp libraries, due to certain functions not being exported in the dll.
-  + There is a [net-snmp-clone](https://github.com/jbreeden/net-snmp-clone) repo with the fixes made if you'd like to build this from source.
-  + Or, you can try my [pre-built DLL](https://github.com/jbreeden/net-snmp-clone/raw/master/win32/bin/release/netsnmp.dll) from the same repo.
-  + I've submitted this as a [feature request](https://sourceforge.net/p/net-snmp/feature-requests/181/) & patch to the net-snmp team. If it works for you, please go make a comment indicating that on the feature request to help it get pulled into the core library.
-- Original gem was using a different comment format... I've opted for markdown. The generated rdocs are probably garbage.
-  + The [wiki](https://github.com/jbreeden/net-snmp2/wiki) has the best documentation for now.
+  + I've submitted this as a [feature request](https://sourceforge.net/p/net-snmp/feature-requests/181/)
+  + The patch has been accepted!
+    - These changes are now available in net-snmp [master](https://sourceforge.net/p/net-snmp/code/ci/master/tree/),
+      as well as [v5.7-patches](https://sourceforge.net/p/net-snmp/code/ci/V5-7-patches/tree/)
+    - You can build either of these from source if you need trap handler & agent support on Windows...
+    - Or, you can wait until they release an official binary of v5.7
+    - Or, you can try my [pre-built DLL](https://github.com/jbreeden/net-snmp-clone/raw/master/win32/bin/release/netsnmp.dll)
+- The [wiki](https://github.com/jbreeden/net-snmp2/wiki) has the best documentation for now.
   + All the specs are passing, so that's another good place to go for information.
   + There is also the built-in net-snmp2 program you can run. This is an interactive Pry shell that is very useful for digging around the code and getting a feel for how to do things.
