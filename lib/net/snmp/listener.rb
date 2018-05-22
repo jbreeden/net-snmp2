@@ -54,7 +54,7 @@ module Net::SNMP
         begin
           return if @killed
           # TODO: Not exactly the most efficient solution...
-          timeout(@interval) do
+          Timeout.timeout(@interval) do
             @packet = @socket.recvfrom(@max_packet_size)
           end
           return if @killed
